@@ -15,5 +15,22 @@
   "bugs": {
     "url": "https://github.com/tuliostarling/e-commerce-tutu-back/issues"
   },
-  "homepage": "https://github.com/tuliostarling/e-commerce-tutu-back#readme"
+  "homepage": "https://github.com/tuliostarling/e-commerce-tutu-back#readme",
+  "dependencies": {
+    "async": "^2.6.1",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "crypto": "^1.0.1",
+    "express": "^4.16.3",
+    "express-validator": "^5.3.0",
+    "jsonwebtoken": "^8.3.0",
+    "knex": "^0.15.2",
+    "mongodb": "^3.1.1",
+    "mongoose": "^5.2.7",
+    "morgan": "^1.9.0",
+    "nodemailer": "^4.6.7",
+    "nodemon": "^1.18.3",
+    "path": "^0.12.7",
+    "pg": "^7.4.3"
+  }
 }
