@@ -81,11 +81,12 @@ exports.newPass = (req, res, callback) => {
 
 exports.authLogin = (req, res, callback) => {
     let query = { email: req.body.email };
-
+    let pass = req.body.password;
     db.knex('users').where(query).then(result => {
+
         if (result.length <= 0) return callback('Usuário não existente', 404);
 
-        if (hashPass(req.body.password) != result[0].password) return callback('Senha Incorreta', 401);
+        if (hashPass(pass) != result[0].password) return callback('Senha Incorreta', 401);
 
         const hash = result[0].hashtoken;
 

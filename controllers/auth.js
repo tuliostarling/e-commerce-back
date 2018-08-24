@@ -1,11 +1,3 @@
-/** 
- * Middleware Auth:
- * - Valida se o token foi informado
- * - Valida se a mascara do token informado está correto (Bearer XXXXXXX)
- * - Valida se é possível recuperar Id CLiente através do token 
- * - Valida se o token é valido (Expirado e Assinatura correta)
- * - Retorna idCliente
-*/
 
 const jwt = require('jsonwebtoken');
 const db = require('../secrets/config');
