@@ -9,7 +9,7 @@ router.post('/newpass',
     execute(control.newPass));
 
 router.post('/add',
-    execute(control.add));
+    execute(control.add)); 
 
 
 module.exports = router;

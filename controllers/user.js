@@ -49,7 +49,7 @@ exports.confirmUser = (req, res, callback) => {
             db.knex('users').insert(newUser).then(result => {
                 if (result.rowCount > 0) {
                     user.remove();
-                    callback("Usuario Criado com sucesso", 200);//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                    callback('Usuario Criado com sucesso', 200);//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
                 }
             }).catch((err) => { return callback(err, 500); });
         });
@@ -102,14 +102,10 @@ exports.validatetoken = (req, res, callback) => {
     db.knex('users').where({ id: decoded.id }).then(result => {
         if (result.length <= 0) return callback('Usuario não existe', 404);
 
-        //verifico se o token é valido usando a chave de segredo do cliente para abrir-lo
         jwt.verify(token, result[0].hashtoken, (err) => {
-            if (err) {
-                console.log(err);
-                return callback('Token invalid', 401);
-            } else {
-                callback(null, 200, { validatetoken: true });//Se sim retorno que é valido e dou acesso ao cliente.
-            }
+            if (err) return callback('Token invalid', 401);
+            return callback(null, 200, { validatetoken: true });
+
         });
 
     }).catch(err => { return callback(err, 500); });
