@@ -5,6 +5,7 @@ const router = require('express').Router();
 const user = require('./user');
 const product = require('./products');
 const category = require('./category');
+const coupon = require('./coupon');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 
@@ -13,6 +14,8 @@ const noauth = require('./noauth')
 router.use('/', noauth);
 router.use('/product', product);
 router.use('/category', category);
+router.use('/coupon', coupon);
+
 
 router.use('/auth', authentication); // Login
 
