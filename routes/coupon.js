@@ -7,7 +7,7 @@ const { execute } = require('../controllers/index');
 router.post('/add',
     execute(control.addCoupon));
 
-router.post('/get',
+router.post('/get/:id',
     execute(control.getCoupon));
 
 router.get('/getall',

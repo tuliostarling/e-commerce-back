@@ -17,7 +17,7 @@ exports.addCoupon = (req, res, callback) => {
 
 exports.getCoupon = (req, res, callback) => {
 
-    let id = { id: req.body.id };
+    let id = { id: req.params.id };
     db.knex.select('*').from(TABLE).where(id).then(result => {
         if (result.length > 0)
             return callback(null, 200, result);

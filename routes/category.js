@@ -7,7 +7,7 @@ const { execute } = require('../controllers/index');
 router.get('/listall/',
     execute(control.getList));
 
-router.post('/listone/',
+router.post('/listone/:id',
     execute(control.getOne));
 
 router.post('/add/',

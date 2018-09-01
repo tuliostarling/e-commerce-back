@@ -12,8 +12,8 @@ exports.getList = (req, res, callback) => {
 };
 
 exports.getOne = (req, res, callback) => {
-    let cat = { category: req.body.category };
-    db.knex.select('*').from(TABLE).where(cat).then(result => {
+    let id = { id: req.params.id };
+    db.knex.select('*').from(TABLE).where(id).then(result => {
         if (result.length > 0)
             return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
