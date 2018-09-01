@@ -16,7 +16,7 @@ router.post('/add/',
 router.put('/put/',
     execute(control.updateCategory));
 
-router.delete('/del/',
+router.delete('/del/:id',
     execute(control.delete));
 
 module.exports = router;

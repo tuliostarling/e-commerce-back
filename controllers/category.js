@@ -40,7 +40,7 @@ exports.updateCategory = (req, res, callback) => {
 
 // implement cascade delete logic when the category has a relation with products.
 exports.delete = (req, res, callback) => {
-    let id = { id: req.body.id };
+    let id = { id: req.params.id };
 
     db.knex(TABLE).where(id).del().then(result => {
         if (result > 0) return callback('Categoria deletada com sucesso.', 200);
