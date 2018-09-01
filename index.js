@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000;
 
 
 app.use(morgan('[:date[web]] [:response-time ms] [:status] :method :url'));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
