@@ -16,7 +16,7 @@ exports.add = (req, res, callback) => {
         let hashpassword = crypto.createHash('sha512').update(req.body.password).digest('hex');
         new bufferData({ name: req.body.name, email: req.body.email, password: hashpassword, admin: req.body.admin, hashed: hash })
             .save((err) => {
-                if (err) return callback(err, 500);
+                if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
                 let url = 'localhost:3000/confirm/' + hash + '/';
 
@@ -26,7 +26,7 @@ exports.add = (req, res, callback) => {
                     html: '<p>Parabeins rapaiz clica aqui pa nos e passa o paiero' + url.toString('utf8') + '.</p>'
                 }, (err) => {
                     if (err) return callback(err, 500);
-                    return callback(null, 200, url);
+                    return callback(null, 200);
                 });
             });
 
@@ -49,7 +49,7 @@ exports.confirmUser = (req, res, callback) => {
             db.knex('users').insert(newUser).then(result => {
                 if (result.rowCount > 0) {
                     user.remove();
-                    callback('Usuario Criado com sucesso', 200);//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                    callback(null, 200, 'Usuario Criado com sucesso');//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
                 }
             }).catch((err) => { return callback(err, 500); });
         });
@@ -90,7 +90,7 @@ exports.authLogin = (req, res, callback) => {
 
         const hash = result[0].hashtoken;
 
-        return callback(null, 200, { token: generateToken(hash, { id: result[0].id, admin: result[0].admin }) });
+        return callback(null, 200, { token: generateToken(hash, { id: result[0].id, name: result[0].name, admin: result[0].admin }) });
 
     }).catch(err => { return callback(err, 500) });
 };

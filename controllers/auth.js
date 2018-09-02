@@ -32,6 +32,7 @@ module.exports = (req, res, next, callback) => {
             if (err) return callback('Token invalid', 404);
             // Repassa informações na requição
             req.id = decoded.id;
+            req.name = decoded.name;
             req.admin = decoded.admin;
 
             return next();
