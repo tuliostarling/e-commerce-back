@@ -1,44 +1,32 @@
 'use strict';
 
 const db = require('../secrets/config');
-const { Client } = require('pg');
-const pg = new Client(db.conn);
+const pg = require('pg');
+const pool = new pg.Pool(db.conn);
 const TABLE = 'products';
 
 exports.insertProduct = (req, res, callback) => {
-    let defaultProduct = req.body.defaultProduct;
-    let array = req.files;
-    let product = {
-        id_category: 1,
-        name: req.body.name,
-        size: 38,
-        amount: 10,
-        price: 50,
-        discount: true,
-        description: 'Sapatebs',
-        color: 'red'
-    };
+    const array = req.files;
+    const product = req.body;
     let query;
-
-    if (defaultProduct) {
+    
+    if (product.defaultProduct >= 1) {
         query = `
-        WITH insert1 AS (
+        WITH insertProduct AS (
             INSERT INTO products(id_category,name,size,amount,price,discount,description,color)
             VALUES($1,$2,$3,$4,$5,$6,$7,$8)
             ON   CONFLICT DO NOTHING
             RETURNING id as product_id
-        ),
-        insert2 AS (
-            INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
-            VALUES((select product_id from insert1),$2,$3,$4,$5,$6,$7,$8)
-            ON   CONFLICT DO NOTHING
-            RETURNING id as subproduct_id
         )
-        INSERT into images(id_subproduct,image_type,image_name,image)
-        VALUES((select subproduct_id from insert2),unnest(ARRAY[$9]),unnest(ARRAY[$10]),unnest(ARRAY[$11]))
+        INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
+        VALUES((select product_id from insertProduct),$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id as product_id
         `;
+
     } else {
-        query = ``;
+        query = `INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id as product_id`;
     }
 
     const images = array.reduce((prev, curr) => {
@@ -49,25 +37,36 @@ exports.insertProduct = (req, res, callback) => {
         }
     }, { name: [], type: [], buffer: [] });
 
-    pg.connect((err) => {
-        if (err) return callback(err, 500);
+    (async () => {
+        const client = await pool.connect();
 
-        pg.query(query,
-            [product.id_category, product.name, product.size, product.amount, product.price, product.discount, product.description, product.color,
-            images.name, images.type, images.buffer]
-            , (err, result) => {
-                console.log(err);
-                if (err) return callback(err, 401);
-                if (result.rowCount > 0) return callback(null, 200, 'Imagem salva com sucesso');
-                pg.end();
-            });
+        try {
+            await client.query('BEGIN');
+            const { rows } = await client.query(query,
+                [product.id_fk, product.name, product.size, product.amount, product.price,
+                product.discount, product.description, product.color]);
 
-    });
+            const imageQuery = `INSERT into images(id_subproduct,image_type,image_name,image)
+                VALUES($1,$2,$3,$4)`;
+
+            for (let i = 0; i < images.name.length; i++) {
+                await client.query(imageQuery, [rows[0].product_id, images.type[i], images.name[i], images.buffer[i]]);
+            }
+            await client.query('COMMIT');
+            return callback(null, 200, 'Produto e imagens cadastros com sucesso.');
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+    })().catch(err => { return callback(err, 500); });
+
 };
 
 
 exports.getList = (req, res, callback) => {
-
     db.knex.select('*').from('product').where({ id: 2 }).then(result => {
         if (result.length > 0) {
             console.log(result[0].image);
@@ -85,7 +84,7 @@ exports.getList = (req, res, callback) => {
 
 
 exports.getOne = (req, res, callback) => {
-    
+
 };
 
 
