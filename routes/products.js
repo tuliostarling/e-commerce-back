@@ -5,10 +5,10 @@ const router = require('express').Router();
 const { execute } = require('../controllers/index');
 let upload = require('../secrets/config');
 
-router.get('/listall/',
+router.post('/listall/',
     execute(control.getList));
 
-router.post('/listone/:id',
+router.get('/listone/:id',
     execute(control.getOne));
 
 router.post('/add/',

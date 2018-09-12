@@ -9,7 +9,7 @@ exports.insertProduct = (req, res, callback) => {
     const array = req.files;
     const product = req.body;
     let query;
-    
+
     if (product.defaultProduct >= 1) {
         query = `
         WITH insertProduct AS (
@@ -67,23 +67,63 @@ exports.insertProduct = (req, res, callback) => {
 
 
 exports.getList = (req, res, callback) => {
-    db.knex.select('*').from('product').where({ id: 2 }).then(result => {
-        if (result.length > 0) {
-            console.log(result[0].image);
-            let image = Buffer.from(result[0].image, "base64");
+    const id = req.body.id;
 
-            res.writeHead(200, {
-                'Content-Type': 'image/png',
-                'Content-disposition': 'attachment;filename=' + 'toot',
-            });
-            res.end(image);
+    let query =
+        `select subproducts.id ,subproducts.name , subproducts.id, subproducts.price, images.image_type, images.image_name, images.image, images.id as id_image
+	    from products , subproducts , images 
+		where products.id = subproducts.id_product 
+        and images.id_subproduct = subproducts.id and id_category = ($1)
+        `;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query, [id]);
+            //console.log(rows);
+            if (rows > 0) return callback(null, 200, rows);
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
         }
 
-    }).catch((err) => { return callback(err, 500) });
+    })().catch(err => { return callback(err, 500); });
+
 };
 
 
 exports.getOne = (req, res, callback) => {
+    const id = req.body.id;
+
+    let query =
+        `select * from subproducts, images 
+	        where images.id_subproduct = subproducts.id
+		    and subproducts.id = ($1) 
+        `;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query, [id]);
+            //console.log(rows);
+            if (rows > 0) return callback(null, 200, rows);
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+
+    })().catch(err => { return callback(err, null); });
+
+
 
 };
 
