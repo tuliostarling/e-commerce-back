@@ -9,7 +9,9 @@ router.post('/newpass',
     execute(control.newPass));
 
 router.post('/add',
-    execute(control.add)); 
+    execute(control.add));
 
+router.post('/addCoupon',
+    execute(control.insertCoupon));
 
 module.exports = router;

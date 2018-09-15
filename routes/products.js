@@ -11,8 +11,11 @@ router.post('/listall/',
 router.get('/listone/:id',
     execute(control.getOne));
 
+router.get('/prodimg/:id',
+    execute(control.productImage));
+
 router.post('/add/',
-    upload.upload.array('file',2),//@ToDo change this upload.upload later 
+    upload.upload.array('file', 2),//@ToDo change this upload.upload later 
     execute(control.insertProduct));
 
 router.put('/put/',

@@ -1,11 +1,15 @@
 'use strict';
-const db = require('../secrets/config');
 const crypto = require('crypto');
 const bufferData = require('../models/buffer');
 const mail = require('../wrappers/mail');
 const uuidv4 = require('uuid/v4');
 const generateToken = require('../controllers/jwt');
 const jwt = require('jsonwebtoken');
+const db = require('../secrets/config');
+const pg = require('pg');
+const pool = new pg.Pool(db.conn);
+
+
 
 exports.add = (req, res, callback) => {
 
@@ -23,7 +27,7 @@ exports.add = (req, res, callback) => {
                 mail.send({
                     to: email,
                     subject: 'Parabéns pela sua conta na Tutu Guerra',
-                    html: '<p>Parabeins rapaiz clica aqui pa nos e passa o paiero' + url.toString('utf8') + '.</p>'
+                    html: '<p>Parabeins rapaiz clica aqui pa nos e passa o paiero ' + url.toString('utf8') + '.</p>'
                 }, (err) => {
                     if (err) return callback(err, 500);
                     return callback(null, 200);
@@ -54,7 +58,6 @@ exports.confirmUser = (req, res, callback) => {
             }).catch((err) => { return callback(err, 500); });
         });
 };
-
 
 exports.newPass = (req, res, callback) => {
     let query = { email: req.body.email };
@@ -109,6 +112,41 @@ exports.validatetoken = (req, res, callback) => {
         });
 
     }).catch(err => { return callback(err, 500); });
+};
+
+exports.insertCoupon = (req, res, callback) => {
+    const data = req.body;
+
+    const validatequery = `
+    SELECT * from user_coupons 
+    where id_coupon = (SELECT id from coupons where name = ($1))	
+	AND id_user = ($2)
+    ;`;
+
+    const insertquery = `INSERT into user_coupons (id_user,id_coupon,used)
+    VALUES (($1),(SELECT id from coupons where name = ($2)),true)
+    ON CONFLICT DO NOTHING
+    RETURNING id 
+    `;
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(validatequery, [data.coupon, data.id]);
+            if (rows.length > 0) return callback(null, 401, 'Coupon ja inserido.');
+
+            const result = await client.query(insertquery, [data.id, data.coupon])
+            if (result.rows.length > 0) return callback(null, 200, 'Coupon inserido!');
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, null); });
+
 };
 
 

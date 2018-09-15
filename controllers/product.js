@@ -3,7 +3,7 @@
 const db = require('../secrets/config');
 const pg = require('pg');
 const pool = new pg.Pool(db.conn);
-const TABLE = 'products';
+
 
 exports.insertProduct = (req, res, callback) => {
     const array = req.files;
@@ -20,13 +20,13 @@ exports.insertProduct = (req, res, callback) => {
         )
         INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
         VALUES((select product_id from insertProduct),$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id
+        RETURNING id as product_id;
         `;
 
     } else {
         query = `INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id`;
+        RETURNING id as product_id;`;
     }
 
     const images = array.reduce((prev, curr) => {
@@ -69,11 +69,11 @@ exports.insertProduct = (req, res, callback) => {
 exports.getList = (req, res, callback) => {
     const id = req.body.id;
 
-    let query =
-        `select subproducts.id ,subproducts.name , subproducts.id, subproducts.price, images.image_type, images.image_name, images.image, images.id as id_image
+    const query =
+        `select subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.image_type, images.image_name, images.image, images.id as id_image
 	    from products , subproducts , images 
 		where products.id = subproducts.id_product 
-        and images.id_subproduct = subproducts.id and id_category = ($1)
+        and images.id_subproduct = subproducts.id and id_category = ($1);
         `;
 
     (async () => {
@@ -81,8 +81,8 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            //console.log(rows);
-            if (rows > 0) return callback(null, 200, rows);
+
+            if (rows.length > 0) return callback(null, 200, rows);
 
         } catch (err) {
             console.log(err);
@@ -97,12 +97,11 @@ exports.getList = (req, res, callback) => {
 
 
 exports.getOne = (req, res, callback) => {
-    const id = req.body.id;
+    const id = req.params.id;
 
-    let query =
-        `select * from subproducts, images 
-	        where images.id_subproduct = subproducts.id
-		    and subproducts.id = ($1) 
+    const query =
+        `select * from subproducts 
+        where id = ($1);
         `;
 
     (async () => {
@@ -110,8 +109,7 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            //console.log(rows);
-            if (rows > 0) return callback(null, 200, rows);
+            if (rows.length > 0) return callback(null, 200, rows);
 
         } catch (err) {
             console.log(err);
@@ -120,11 +118,35 @@ exports.getOne = (req, res, callback) => {
             client.release();
         }
 
+    })().catch(err => { return callback(err, null); });
+};
+
+exports.productImage = (req, res, callback) => {
+    const id = req.params.id;
+
+    const query = `select * from images where id_subproduct = ($1);`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query, [id]);
+
+            if (rows.length > 0) {
+                let data = rows.map(x => x.image);
+                res.writeHead(200, { 'Content-Type': rows[0].image_type });
+
+                let bufferImages = Buffer.concat(data);
+                res.end(new Buffer(bufferImages, 'binary'));
+            }
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
 
     })().catch(err => { return callback(err, null); });
-
-
-
 };
 
 

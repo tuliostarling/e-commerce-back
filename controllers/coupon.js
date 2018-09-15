@@ -4,8 +4,14 @@ const TABLE = 'coupons';
 
 exports.addCoupon = (req, res, callback) => {
 
-    let coupon = req.body;
-    db.knex(TABLE).where({ name: req.body.name }).then(result => {
+    let coupon = {
+        name: req.body.name.toLowerCase(),
+        value: req.body.value,
+        valid: req.body.valid,
+        expire_at: req.body.expire_at
+    }
+
+    db.knex(TABLE).where({ name: coupon.name }).then(result => {
         if (result.length > 0) return callback('Coupon com mesmo nome ja existente', 404);
 
         db.knex(TABLE).insert(coupon).then(result => {
@@ -25,7 +31,6 @@ exports.getCoupon = (req, res, callback) => {
     }).catch((err) => { return callback(err, 500); });
 };
 
-
 exports.getAllCoupon = (req, res, callback) => {
 
     db.knex.select('*').from(TABLE).then(result => {
@@ -33,7 +38,6 @@ exports.getAllCoupon = (req, res, callback) => {
             return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 };
-
 
 exports.updateCoupon = (req, res, callback) => {
     let id = { id: req.body.id };
@@ -44,7 +48,6 @@ exports.updateCoupon = (req, res, callback) => {
     }).catch((err) => { return callback(err, 500); });
 
 };
-
 
 exports.delCoupon = (req, res, callback) => {
     let id = { id: req.params.id };
