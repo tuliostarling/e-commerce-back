@@ -3,19 +3,19 @@
 const control = require('../controllers/product');
 const router = require('express').Router();
 const { execute } = require('../controllers/index');
-let upload = require('../secrets/config');
+
+const multer = require('multer');
+let storage = multer.memoryStorage()
+let upload = multer({ storage: storage });
 
 router.post('/listall/',
     execute(control.getList));
 
 router.get('/listone/:id',
     execute(control.getOne));
-
-router.get('/prodimg/:id',
-    execute(control.productImage));
-
+    
 router.post('/add/',
-    upload.upload.array('file', 2),//@ToDo change this upload.upload later 
+    upload.array('file', 2),
     execute(control.insertProduct));
 
 router.put('/put/',

@@ -3,10 +3,10 @@
 const db = require('../secrets/config');
 const pg = require('pg');
 const pool = new pg.Pool(db.conn);
-
+const AWS = require('aws-sdk');
 
 exports.insertProduct = (req, res, callback) => {
-    const array = req.files;
+    const images = req.files;
     const product = req.body;
     let query;
 
@@ -29,14 +29,6 @@ exports.insertProduct = (req, res, callback) => {
         RETURNING id as product_id;`;
     }
 
-    const images = array.reduce((prev, curr) => {
-        return {
-            name: [...prev.name, curr.originalname],
-            type: [...prev.type, curr.mimetype],
-            buffer: [...prev.buffer, curr.buffer]
-        }
-    }, { name: [], type: [], buffer: [] });
-
     (async () => {
         const client = await pool.connect();
 
@@ -46,12 +38,16 @@ exports.insertProduct = (req, res, callback) => {
                 [product.id_fk, product.name, product.size, product.amount, product.price,
                 product.discount, product.description, product.color]);
 
-            const imageQuery = `INSERT into images(id_subproduct,image_type,image_name,image)
-                VALUES($1,$2,$3,$4)`;
+            const imageQuery = `INSERT into images(id_subproduct,versionID_aws,location_aws,bucket_aws,key_aws,etag_aws)
+                VALUES($1,$2,$3,$4,$5,$6)`;
 
-            for (let i = 0; i < images.name.length; i++) {
-                await client.query(imageQuery, [rows[0].product_id, images.type[i], images.name[i], images.buffer[i]]);
+            const s3Result = await s3BucketInsert(images);
+
+            for (let i = 0; i < s3Result.length; i++) {
+                await client.query(imageQuery,
+                    [rows[0].product_id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
             }
+
             await client.query('COMMIT');
             return callback(null, 200, 'Produto e imagens cadastros com sucesso.');
         } catch (err) {
@@ -63,6 +59,31 @@ exports.insertProduct = (req, res, callback) => {
         }
     })().catch(err => { return callback(err, 500); });
 
+
+    function s3BucketInsert(images) {
+        AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
+        const s3Bucket = new AWS.S3();
+        const results = [];
+        return new Promise(
+            (resolve, reject) => {
+                images.map((item) => {
+                    let params = {
+                        Bucket: db.S3.BUCKET_PATH,
+                        Key: item.originalname,
+                        Body: item.buffer,
+                        ContentType: item.mimetype,
+                        ACL: 'public-read'
+                    };
+
+                    return s3Bucket.upload(params, (err, result) => {
+                        if (err) return reject(err);
+                        results.push(result);
+                        if (results.length == images.length) return resolve(results);
+
+                    });
+                });
+            });
+    }
 };
 
 
@@ -70,7 +91,7 @@ exports.getList = (req, res, callback) => {
     const id = req.body.id;
 
     const query =
-        `select subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.image_type, images.image_name, images.image, images.id as id_image
+        `select subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.location_aws, images.id as id_image
 	    from products , subproducts , images 
 		where products.id = subproducts.id_product 
         and images.id_subproduct = subproducts.id and id_category = ($1);
@@ -81,7 +102,6 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-
             if (rows.length > 0) return callback(null, 200, rows);
 
         } catch (err) {
@@ -100,8 +120,11 @@ exports.getOne = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `select * from subproducts 
-        where id = ($1);
+        `select subproducts.id as id_subproduct, subproducts.name, subproducts.size, subproducts.amount, subproducts.price,
+             subproducts.discount , subproducts.description, subproducts.color, subproducts.id_product,
+                images.id, images.location_aws
+	                from subproducts , images
+    	                where subproducts.id = ($1);
         `;
 
     (async () => {
@@ -109,7 +132,22 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            if (rows.length > 0) return callback(null, 200, rows);
+
+            let imagesURL = rows.map(x => x.location_aws);
+            let productObj = {
+                id: rows[0].id_subproduct,
+                name: rows[0].name,
+                size: rows[0].size,
+                amount: rows[0].amount,
+                price: rows[0].price,
+                discount: rows[0].discount,
+                description: rows[0].description,
+                color: rows[0].color,
+                id_product: rows[0].id_product,
+                location_aws: imagesURL
+            };
+
+            if (rows.length > 0) return callback(null, 200, productObj);
 
         } catch (err) {
             console.log(err);
@@ -121,33 +159,6 @@ exports.getOne = (req, res, callback) => {
     })().catch(err => { return callback(err, null); });
 };
 
-exports.productImage = (req, res, callback) => {
-    const id = req.params.id;
-
-    const query = `select * from images where id_subproduct = ($1);`;
-
-    (async () => {
-        const client = await pool.connect();
-
-        try {
-            const { rows } = await client.query(query, [id]);
-
-            if (rows.length > 0) {
-                let data = rows.map(x => x.image);
-                res.writeHead(200, { 'Content-Type': rows[0].image_type });
-
-                let bufferImages = Buffer.concat(data);
-                res.end(new Buffer(bufferImages, 'binary'));
-            }
-        } catch (err) {
-            console.log(err);
-            throw err;
-        } finally {
-            client.release();
-        }
-
-    })().catch(err => { return callback(err, null); });
-};
 
 
 

@@ -6,8 +6,6 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const config = require('./secrets/config');
 const psql = require('./secrets/config');
-
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -16,13 +14,8 @@ app.use(morgan('[:date[web]] [:response-time ms] [:status] :method :url'));
 app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
-
 app.use(require('./routes'));
 
-// pg.connect((err) => {
-//     if (err) return console.error('connection error', err.stack);
-//     return console.log('PostgreSQL OK!')
-// })
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongodb, { useNewUrlParser: true }, (err, cb) => {

@@ -124,7 +124,7 @@ exports.insertCoupon = (req, res, callback) => {
     ;`;
 
     const insertquery = `INSERT into user_coupons (id_user,id_coupon,used)
-    VALUES (($1),(SELECT id from coupons where name = ($2)),true)
+    VALUES (($1),(SELECT id from coupons where name = ($2)),false)
     ON CONFLICT DO NOTHING
     RETURNING id 
     `;
