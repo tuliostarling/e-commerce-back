@@ -30,7 +30,7 @@ exports.add = (req, res, callback) => {
                     html: '<p>Parabeins rapaiz clica aqui pa nos e passa o paiero ' + url.toString('utf8') + '.</p>'
                 }, (err) => {
                     if (err) return callback(err, 500);
-                    return callback(null, 200);
+                    return callback(null, 200, url);
                 });
             });
 
@@ -50,12 +50,31 @@ exports.confirmUser = (req, res, callback) => {
                 return callback('Código de confirmação expirado, crie seu Usuario novamente', 404); //REFATORAR para avisar que o codigo expirou ou ja foi confirmado
 
             let newUser = { name: user.name, password: user.password, email: user.email, hashtoken: user.hashed, admin: user.admin };
-            db.knex('users').insert(newUser).then(result => {
-                if (result.rowCount > 0) {
+            let queryUser = `INSERT INTO users(name,password,email,hashtoken,admin) VALUES ($1,$2,$3,$4,$5) RETURNING id`;
+
+            (async () => {
+                const client = await pool.connect();
+
+                try {
+                    await client.query('BEGIN');
+
+                    const { rows } = await client.query(queryUser,
+                        [newUser.name, newUser.password, newUser.email, newUser.hashtoken, newUser.admin]);
+
+                    let queryCart = `INSERT INTO cart(id_user) VALUES ($1)`;
+                    await client.query(queryCart, [rows[0].id]);
+
+                    await client.query('COMMIT');
                     user.remove();
-                    callback(null, 200, 'Usuario Criado com sucesso');//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                    return callback(null, 200, 'Usuario Criado com sucesso');//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                } catch (err) {
+                    await client.query('ROLLBACK');
+                    console.log(err);
+                    throw err;
+                } finally {
+                    client.release();
                 }
-            }).catch((err) => { return callback(err, 500); });
+            })().catch(err => { return callback(err, 500); });
         });
 };
 
@@ -148,7 +167,6 @@ exports.insertCoupon = (req, res, callback) => {
     })().catch(err => { return callback(err, null); });
 
 };
-
 
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');
