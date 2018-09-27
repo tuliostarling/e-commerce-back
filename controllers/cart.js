@@ -8,7 +8,8 @@ exports.getItems = (req, res, callback) => {
     const id_cart = req.params.id;
 
     const query = `
-    SELECT subproducts.id, subproducts.name, subproducts.price, subproducts.size, items.amount, items.id FROM items, cart, subproducts
+    SELECT DISTINCT subproducts.id, subproducts.name, subproducts.price, subproducts.size, items.amount, items.id
+    FROM items, cart, subproducts
     where cart.id = ($1)
     and subproducts.id = items.id_subproduct
     `;
@@ -18,8 +19,12 @@ exports.getItems = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id_cart]);
-            console.log(rows);
-            //if (rows.length > 0) return callback(null, 200, rows);
+
+            if (rows.length > 0) {
+                let totalPrice = rows.map(x => x.price * x.amount)
+                    .reduce((curr, next) => curr + next, 0);
+                return callback(null, 200, [rows, { totalPrice }]);
+            }
         } catch (err) {
             console.log(err);
             throw err;

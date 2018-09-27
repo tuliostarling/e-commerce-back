@@ -91,10 +91,11 @@ exports.getList = (req, res, callback) => {
     const id = req.body.id;
 
     const query =
-        `select subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.location_aws, images.id as id_image
-	    from products , subproducts , images 
-		where products.id = subproducts.id_product 
-        and images.id_subproduct = subproducts.id and id_category = ($1);
+        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.location_aws, images.id 
+	    FROM products , subproducts , images 
+		WHERE products.id = subproducts.id_product 
+        AND images.id_subproduct = subproducts.id 
+        AND id_category = ($1);
         `;
 
     (async () => {
