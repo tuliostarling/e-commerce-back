@@ -104,17 +104,25 @@ exports.newPass = (req, res, callback) => {
 exports.authLogin = (req, res, callback) => {
     let query = { email: req.body.email };
     let pass = req.body.password;
-    db.knex('users').where(query).then(result => {
 
-        if (result.length <= 0) return callback('Usuário não existente', 404);
+    db.knex.transaction(async (trx) => {
+        try {
+            let obj = await trx.select('*').from('users').where(query);
 
-        if (hashPass(pass) != result[0].password) return callback('Senha Incorreta', 401);
+            if (obj.length <= 0) return callback('Usuário não existente', 404);
 
-        const hash = result[0].hashtoken;
+            if (hashPass(pass) != obj[0].password) return callback('Senha Incorreta', 401);
 
-        return callback(null, 200, { token: generateToken(hash, { id: result[0].id, name: result[0].name, admin: result[0].admin }) });
+            let cart = await trx.select('*').from('cart').where({ id_user: obj[0].id });
 
-    }).catch(err => { return callback(err, 500) });
+            const hash = obj[0].hashtoken;
+
+            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id }) });
+
+        } catch (err) {
+            return callback(err, 500);
+        }
+    });
 };
 
 exports.validatetoken = (req, res, callback) => {
