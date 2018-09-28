@@ -14,4 +14,7 @@ router.post('/add',
 router.post('/addCoupon',
     execute(control.insertCoupon));
 
+router.put('/put',
+    execute(control.update));
+
 module.exports = router;

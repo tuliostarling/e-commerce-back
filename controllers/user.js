@@ -176,6 +176,35 @@ exports.insertCoupon = (req, res, callback) => {
 
 };
 
+exports.update = (req, res, callback) => {
+    const {
+        id,
+        name,
+        email
+    } = req.body;
+    let updateObj = {};
+    
+    db.knex.transaction(async (trx) => {
+        try {
+
+            if (name != null && name != undefined) updateObj.name = name;
+            if (email != null && email != undefined) updateObj.email = email;
+
+            let obj = await trx.select('*').from('users').where({ id: req.body.id });
+            
+            if (obj.length <= 0) return callback('Usuário não existente', 404);
+
+            let result = await trx.where({ id: id }).update({ name: updateObj.name, email: updateObj.email }).into('users');
+
+            if (result >= 1) return callback('Usuario alterado com sucesso', 200);
+        } catch (err) {
+            return callback(err, 500);
+        }
+    });
+
+};
+
+
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');
 }

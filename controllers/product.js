@@ -91,7 +91,7 @@ exports.getList = (req, res, callback) => {
     const id = req.body.id;
 
     const query =
-        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id ,subproducts.name , subproducts.id_product, subproducts.price, images.location_aws, images.id 
+        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
 	    FROM products , subproducts , images 
 		WHERE products.id = subproducts.id_product 
         AND images.id_subproduct = subproducts.id 
@@ -103,6 +103,7 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
+            console.log(rows);
             if (rows.length > 0) return callback(null, 200, rows);
 
         } catch (err) {

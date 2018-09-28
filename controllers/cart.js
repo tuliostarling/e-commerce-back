@@ -23,7 +23,15 @@ exports.getItems = (req, res, callback) => {
             if (rows.length > 0) {
                 let totalPrice = rows.map(x => x.price * x.amount)
                     .reduce((curr, next) => curr + next, 0);
-                return callback(null, 200, [rows, { totalPrice }]);
+                let pricesObj = {
+                    finalValue: totalPrice
+                };
+
+                if (totalPrice >= 80) pricesObj.installments2x = totalPrice / 2;
+                if (totalPrice >= 140) pricesObj.installments3x = totalPrice / 3;
+                if (totalPrice >= 300) pricesObj.installments4x = totalPrice / 4;
+                
+                return callback(null, 200, [rows, pricesObj]);
             }
         } catch (err) {
             console.log(err);
@@ -41,7 +49,13 @@ exports.addtoCart = (req, res, callback) => {
     const id_subproduct = req.body.id_product;
     const amount = req.body.amount;
 
-    const query = `INSERT INTO items(id_cart,id_subproduct,amount) VALUES (($1),($2),($3));`;
+    const query = `
+    INSERT INTO items(id_cart,id_subproduct,amount) 
+    SELECT ($1),($2),($3)
+    WHERE NOT EXISTS (
+    SELECT id_subproduct
+    FROM items WHERE id_subproduct = ($2) AND id_cart = ($1)
+    )`;
 
     (async () => {
         const client = await pool.connect();
@@ -49,6 +63,7 @@ exports.addtoCart = (req, res, callback) => {
         try {
             const rows = await client.query(query, [id_cart, id_subproduct, amount]);
             if (rows.rowCount > 0) return callback(null, 200, 'Produto inserido no carrinho com sucesso');
+            return callback('Produto já esta no carrinho', 401);
         } catch (err) {
             console.log(err);
             throw err;
