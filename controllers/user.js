@@ -10,7 +10,6 @@ const pg = require('pg');
 const pool = new pg.Pool(db.conn);
 
 
-
 exports.add = (req, res, callback) => {
 
     db.knex('users').where({ email: req.body.email }).then(result => {
@@ -19,18 +18,19 @@ exports.add = (req, res, callback) => {
         let hash = uuidv4();
         let hashpassword = crypto.createHash('sha512').update(req.body.password).digest('hex');
         new bufferData({ name: req.body.name, email: req.body.email, password: hashpassword, admin: req.body.admin, hashed: hash })
-            .save((err) => {
+            .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                let url = 'localhost:3000/confirm/' + hash + '/';
+                let url = 'tutuguerra.com.br/confirm/' + hash + '/';
 
                 mail.send({
                     to: email,
                     subject: 'Parabéns pela sua conta na Tutu Guerra',
-                    html: '<p>Parabeins rapaiz clica aqui pa nos e passa o paiero ' + url.toString('utf8') + '.</p>'
+                    html: `Olá ${email}, <br><br>\n 
+                    Para confirmar seu cadastro clique em ${url}`
                 }, (err) => {
                     if (err) return callback(err, 500);
-                    return callback(null, 200, url);
+                    return callback(null, 200, { id: obj._id });
                 });
             });
 
@@ -66,7 +66,7 @@ exports.confirmUser = (req, res, callback) => {
 
                     await client.query('COMMIT');
                     user.remove();
-                    return callback(null, 200, 'Usuario Criado com sucesso');//REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                    return res.redirect('tutuguerra.com');// callback(null, 200, 'Usuario confirmado com sucesso') REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
                 } catch (err) {
                     await client.query('ROLLBACK');
                     console.log(err);
@@ -183,7 +183,7 @@ exports.update = (req, res, callback) => {
         email
     } = req.body;
     let updateObj = {};
-    
+
     db.knex.transaction(async (trx) => {
         try {
 
@@ -191,7 +191,7 @@ exports.update = (req, res, callback) => {
             if (email != null && email != undefined) updateObj.email = email;
 
             let obj = await trx.select('*').from('users').where({ id: req.body.id });
-            
+
             if (obj.length <= 0) return callback('Usuário não existente', 404);
 
             let result = await trx.where({ id: id }).update({ name: updateObj.name, email: updateObj.email }).into('users');

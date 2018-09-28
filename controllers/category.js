@@ -24,7 +24,7 @@ exports.insertCategory = (req, res, callback) => {
 
     db.knex(TABLE).insert(newCat).then(result => {
         if (result.rowCount > 0)
-            return callback(null, 200, 'Categoria Inserida com sucesso!!');
+            return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 };
 
@@ -33,7 +33,7 @@ exports.updateCategory = (req, res, callback) => {
     let newObj = { category: req.body.category, type: req.body.type };
 
     db.knex(TABLE).where(id).update(newObj).then(result => {
-        if (result > 0) return callback(null, 200, 'Categoria atualizada com sucesso.');
+        if (result > 0) return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 
 };
@@ -43,7 +43,7 @@ exports.delete = (req, res, callback) => {
     let id = { id: req.params.id };
 
     db.knex(TABLE).where(id).del().then(result => {
-        if (result > 0) return callback(null, 200, 'Categoria deletada com sucesso.');
+        if (result > 0) return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 };
 
