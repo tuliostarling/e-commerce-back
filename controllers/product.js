@@ -91,7 +91,7 @@ exports.insertProduct = (req, res, callback) => {
                 [product.id_fk, product.name, product.size, product.amount, product.price,
                 product.discount, product.description, product.color]);
 
-            if (rows.length > 0) return callback(null, 200, rows.product_id);
+            if (rows.length > 0) return callback(null, 200, rows);
         } catch (err) {
             await client.query('ROLLBACK');
             console.log(err);
