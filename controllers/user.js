@@ -205,6 +205,7 @@ exports.update = (req, res, callback) => {
 };
 
 
+
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');
 }

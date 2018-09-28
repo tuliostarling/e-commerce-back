@@ -5,39 +5,14 @@ const pg = require('pg');
 const pool = new pg.Pool(db.conn);
 const AWS = require('aws-sdk');
 
-exports.insertProduct = (req, res, callback) => {
+exports.addImages = (req, res, callback) => {
     const images = req.files;
-    const product = req.body;
-    let query;
-
-    if (product.defaultProduct >= 1) {
-        query = `
-        WITH insertProduct AS (
-            INSERT INTO products(id_category,name,size,amount,price,discount,description,color)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-            ON   CONFLICT DO NOTHING
-            RETURNING id as product_id
-        )
-        INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
-        VALUES((select product_id from insertProduct),$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id;
-        `;
-
-    } else {
-        query = `INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id;`;
-    }
+    const id = req.params.id;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            await client.query('BEGIN');
-            const { rows } = await client.query(query,
-                [product.id_fk, product.name, product.size, product.amount, product.price,
-                product.discount, product.description, product.color]);
-
             const imageQuery = `INSERT into images(id_subproduct,versionID_aws,location_aws,bucket_aws,key_aws,etag_aws)
                 VALUES($1,$2,$3,$4,$5,$6)`;
 
@@ -45,10 +20,9 @@ exports.insertProduct = (req, res, callback) => {
 
             for (let i = 0; i < s3Result.length; i++) {
                 await client.query(imageQuery,
-                    [rows[0].product_id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
+                    [id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
             }
 
-            await client.query('COMMIT');
             return callback(null, 200, 'Produto e imagens cadastros com sucesso.');
         } catch (err) {
             await client.query('ROLLBACK');
@@ -58,7 +32,6 @@ exports.insertProduct = (req, res, callback) => {
             client.release();
         }
     })().catch(err => { return callback(err, 500); });
-
 
     function s3BucketInsert(images) {
         AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
@@ -84,6 +57,50 @@ exports.insertProduct = (req, res, callback) => {
                 });
             });
     }
+
+};
+
+exports.insertProduct = (req, res, callback) => {
+    const product = req.body;
+    let query;
+
+    if (product.defaultProduct) {
+        query = `
+        WITH insertProduct AS (
+            INSERT INTO products(id_category,name,size,amount,price,discount,description,color)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+            ON   CONFLICT DO NOTHING
+            RETURNING id as product_id
+        )
+        INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
+        VALUES((select product_id from insertProduct),$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id as product_id;
+        `;
+
+    } else {
+        query = `INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING id as product_id;`;
+    }
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query,
+                [product.id_fk, product.name, product.size, product.amount, product.price,
+                product.discount, product.description, product.color]);
+
+            if (rows.length > 0) return callback(null, 200, rows.product_id);
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+    })().catch(err => { return callback(err, 500); });
+
 };
 
 

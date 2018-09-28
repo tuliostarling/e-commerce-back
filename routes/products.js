@@ -13,10 +13,13 @@ router.post('/listall/',
 
 router.get('/listone/:id',
     execute(control.getOne));
-    
+
 router.post('/add/',
-    upload.array('file', 2),
     execute(control.insertProduct));
+
+router.post('/addImages/:id',
+    upload.array('file', 5),
+    execute(control.addImages));
 
 router.put('/put/',
     execute(control.updateProduct));
