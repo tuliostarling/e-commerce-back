@@ -30,7 +30,7 @@ exports.getItems = (req, res, callback) => {
                 if (totalPrice >= 80) pricesObj.installments2x = totalPrice / 2;
                 if (totalPrice >= 140) pricesObj.installments3x = totalPrice / 3;
                 if (totalPrice >= 300) pricesObj.installments4x = totalPrice / 4;
-                
+
                 return callback(null, 200, [rows, pricesObj]);
             }
         } catch (err) {
@@ -62,7 +62,7 @@ exports.addtoCart = (req, res, callback) => {
 
         try {
             const rows = await client.query(query, [id_cart, id_subproduct, amount]);
-            if (rows.rowCount > 0) return callback(null, 200, 'Produto inserido no carrinho com sucesso');
+            if (rows.rowCount > 0) return callback(null, 200, rows);
             return callback('Produto já esta no carrinho', 401);
         } catch (err) {
             console.log(err);
@@ -109,7 +109,7 @@ exports.removefromCart = (req, res, callback) => {
 
         try {
             const rows = await client.query(query, [id_subproduct]);
-            if (rows.rowCount > 0) return callback(null, 200, 'Produto removido do carrinho com sucesso');
+            if (rows.rowCount > 0) return callback(null, 200, rows);
         } catch (err) {
             console.log(err);
             throw err;

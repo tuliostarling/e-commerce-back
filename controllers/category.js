@@ -33,8 +33,9 @@ exports.updateCategory = (req, res, callback) => {
     let newObj = { category: req.body.category, type: req.body.type };
 
     db.knex(TABLE).where(id).update(newObj).then(result => {
-        if (result > 0) return callback(null, 200, result);
-    }).catch((err) => { return callback(err, 500); });
+        console.log(result);
+        if (result > 0) return callback(null, 200, { sucess: true });
+    }).catch((err) => { console.log(err); return callback(err, 500); });
 
 };
 
@@ -43,7 +44,7 @@ exports.delete = (req, res, callback) => {
     let id = { id: req.params.id };
 
     db.knex(TABLE).where(id).del().then(result => {
-        if (result > 0) return callback(null, 200, result);
+        if (result > 0) return callback(null, 200, { sucess: true });
     }).catch((err) => { return callback(err, 500); });
 };
 

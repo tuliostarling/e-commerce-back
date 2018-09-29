@@ -160,10 +160,10 @@ exports.insertCoupon = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(validatequery, [data.coupon, data.id]);
-            if (rows.length > 0) return callback(null, 401, 'Coupon ja inserido.');
+            if (rows.length > 0) return callback('Coupon ja inserido.', 401);
 
             const result = await client.query(insertquery, [data.id, data.coupon])
-            if (result.rows.length > 0) return callback(null, 200, 'Coupon inserido!');
+            if (result.rows.length > 0) return callback(null, 200, result);
 
         } catch (err) {
             console.log(err);
@@ -196,7 +196,7 @@ exports.update = (req, res, callback) => {
 
             let result = await trx.where({ id: id }).update({ name: updateObj.name, email: updateObj.email }).into('users');
 
-            if (result >= 1) return callback('Usuario alterado com sucesso', 200);
+            if (result >= 1) return callback(null, 200, result);
         } catch (err) {
             return callback(err, 500);
         }

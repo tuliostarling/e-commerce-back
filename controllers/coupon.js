@@ -15,7 +15,7 @@ exports.addCoupon = (req, res, callback) => {
         if (result.length > 0) return callback('Coupon com mesmo nome ja existente', 404);
 
         db.knex(TABLE).insert(coupon).then(result => {
-            if (result.rowCount > 0) return callback(null, 200, 'Coupon inserido com sucesso');
+            if (result.rowCount > 0) return callback(null, 200, result);
         });
 
     }).catch((err) => { return callback(err, 500); });
@@ -44,7 +44,7 @@ exports.updateCoupon = (req, res, callback) => {
     let newObj = req.body;
 
     db.knex(TABLE).where(id).update(newObj).then(result => {
-        if (result > 0) return callback(null, 200, 'Coupon Atualizo com sucesso.');
+        if (result > 0) return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 
 };
@@ -53,6 +53,6 @@ exports.delCoupon = (req, res, callback) => {
     let id = { id: req.params.id };
 
     db.knex(TABLE).where(id).del().then(result => {
-        if (result > 0) return callback(null, 200, 'Coupon Deletado com sucesso.');
+        if (result > 0) return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 };
