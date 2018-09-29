@@ -23,7 +23,7 @@ exports.addImages = (req, res, callback) => {
                     [id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
             }
 
-            return callback(null, 200, 'Produto e imagens cadastros com sucesso.');
+            return callback(null, 200, { sucess: true });
         } catch (err) {
             await client.query('ROLLBACK');
             console.log(err);
@@ -120,9 +120,7 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            console.log(rows);
             if (rows.length > 0) return callback(null, 200, rows);
-
         } catch (err) {
             console.log(err);
             throw err;
@@ -134,6 +132,29 @@ exports.getList = (req, res, callback) => {
 
 };
 
+exports.getAll = (req, res, callback) => {
+
+    const query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
+    FROM products , subproducts , images 
+    WHERE products.id = subproducts.id_product 
+    AND images.id_subproduct = subproducts.id 
+    `;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query);
+            if (rows.length > 0) return callback(null, 200, rows);
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); });
+};
 
 exports.getOne = (req, res, callback) => {
     const id = req.params.id;

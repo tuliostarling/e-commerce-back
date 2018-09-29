@@ -8,7 +8,10 @@ const multer = require('multer');
 let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
-router.post('/listall/',
+router.get('/listall/',
+    execute(control.getAll));
+
+router.post('/listBycategory/',
     execute(control.getList));
 
 router.get('/listone/:id',
