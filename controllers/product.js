@@ -41,7 +41,7 @@ exports.addImages = (req, res, callback) => {
             (resolve, reject) => {
                 images.map((item) => {
                     let params = {
-                        Bucket: db.S3.BUCKET_PATH,
+                        Bucket: db.S3.BUCKET_PRODUCTS_PATH,
                         Key: item.originalname,
                         Body: item.buffer,
                         ContentType: item.mimetype,
@@ -134,7 +134,7 @@ exports.getList = (req, res, callback) => {
 
 exports.getAll = (req, res, callback) => {
 
-    const query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
+    const query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws 
     FROM products , subproducts , images 
     WHERE products.id = subproducts.id_product 
     AND images.id_subproduct = subproducts.id 

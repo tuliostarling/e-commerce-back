@@ -4,6 +4,11 @@ const control = require('../controllers/category');
 const router = require('express').Router();
 const { execute } = require('../controllers/index');
 
+const multer = require('multer');
+let storage = multer.memoryStorage()
+let upload = multer({ storage: storage });
+
+
 router.get('/listall/',
     execute(control.getList));
 
@@ -12,6 +17,10 @@ router.get('/listone/:id',
 
 router.post('/add/',
     execute(control.insertCategory));
+
+router.post('/addImages/',
+    upload.array('file',1),
+    execute(control.addImages));
 
 router.put('/put/',
     execute(control.updateCategory));

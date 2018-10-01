@@ -21,7 +21,7 @@ exports.add = (req, res, callback) => {
             .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                let url = 'tutuguerra.com.br/confirm/' + hash + '/';
+                let url = 'localhost:3000/confirm/' + hash + '/';
 
                 mail.send({
                     to: email,
