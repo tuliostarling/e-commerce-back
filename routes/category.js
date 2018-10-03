@@ -19,10 +19,14 @@ router.post('/add/',
     execute(control.insertCategory));
 
 router.post('/addImages/',
-    upload.array('file',1),
+    upload.array('file', 1),
     execute(control.addImages));
 
-router.put('/put/',
+router.put('/putImages/',
+    upload.array('file', 1),
+    execute(control.putImages));
+
+router.put('/put/:id',
     execute(control.updateCategory));
 
 router.delete('/del/:id',
