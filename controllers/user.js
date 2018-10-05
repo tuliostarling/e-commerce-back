@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../secrets/config');
 const pg = require('pg');
 const pool = new pg.Pool(db.conn);
+const TABLE = 'users';
 
 
 exports.add = (req, res, callback) => {
@@ -204,6 +205,14 @@ exports.update = (req, res, callback) => {
 
 };
 
+exports.getOne = (req, res, callback) => {
+    let id = { id: req.params.id };
+
+    db.knex.select('*').from(TABLE).where(id).then(result => {
+        if (result.length > 0)
+            return callback(null, 200, result);
+    }).catch((err) => { return callback(err, 500); });
+};
 
 
 function hashPass(pass) {

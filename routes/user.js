@@ -17,4 +17,7 @@ router.post('/addCoupon',
 router.put('/put',
     execute(control.update));
 
+router.get('/listone/:id',
+    execute(control.getOne));
+
 module.exports = router;
