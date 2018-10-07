@@ -107,13 +107,52 @@ exports.updateCategory = (req, res, callback) => {
 
 // implement cascade delete logic when the category has a relation with products.
 exports.delete = (req, res, callback) => {
-    let id = { id: req.params.id };
+    const id = req.params.id;
 
-    db.knex(TABLE).where(id).del().then(result => {
-        if (result > 0) return callback(null, 200, { sucess: true });
-    }).catch((err) => { return callback(err, 500); });
+    const selectQuery = `SELECT * FROM category WHERE category.id = ($1)`;
+    const checkProducts = `SELECT * FROM products WHERE products.id_category = ($1)`;
+    const delQuery = `DELETE FROM category WHERE id = ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            let { rows } = await client.query(selectQuery, [id]);
+
+            let del = await client.query(delQuery, [id]);
+
+            if (del) {
+                let result = await s3BucketRemove(rows[0].key_aws);
+                return callback(null, 200, result);
+            }
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); })
+
 };
 
+
+
+function s3BucketRemove(key) {
+    AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
+    const s3Bucket = new AWS.S3();
+    return new Promise(
+        (resolve, reject) => {
+            return s3Bucket.deleteObject({
+                Bucket: db.S3.BUCKET_CATEGORY_PATH,
+                Key: key
+            }, (err, data) => {
+                if (err) return reject(err);
+                if (data) return resolve(data);
+            })
+        });
+}
 
 function s3BucketInsert(images) {
     AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
