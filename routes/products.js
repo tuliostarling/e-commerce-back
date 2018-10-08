@@ -11,7 +11,7 @@ let upload = multer({ storage: storage });
 router.get('/listall/',
     execute(control.getAll));
 
-router.post('/listBycategory/',
+router.get('/listBycategory/:id',
     execute(control.getList));
 
 router.get('/listone/:id',
