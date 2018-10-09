@@ -10,4 +10,3 @@ COPY ./ $HOME
 RUN npm install && npm rebuild
 
 CMD [ "npm", "start" ]
- 
