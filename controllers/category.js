@@ -109,11 +109,45 @@ exports.updateCategory = (req, res, callback) => {
 exports.delete = (req, res, callback) => {
     let id = { id: req.params.id };
 
-    db.knex(TABLE).where(id).del().then(result => {
-        if (result > 0) return callback(null, 200, { sucess: true });
-    }).catch((err) => { return callback(err, 500); });
+    db.knex.transaction(async (trx) => {
+        try {
+            let { rows } = trx.select('*').from(TABLE).where({ id: id });
+            console.log(rows);
+            //if (rows.length <= 0) return callback('Categoria nao existe.', 404);
+
+            //let imageResult = await s3BucketRemove(req.body.key_aws);
+
+            //console.log(imageResult);
+
+            //let del = db.knex(TABLE).where(id).del();
+        } catch (err) {
+
+        }
+        let imageResult;
+        console.log(imageResult);
+        if (result > 0 && imageResult) return callback(null, 200, { sucess: true });
+        //}).catch((err) => { return callback(err, 500); });
+
+    });
+
 };
 
+
+
+function s3BucketRemove(key) {
+    AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
+    const s3Bucket = new AWS.S3();
+    return new Promise(
+        (resolve, reject) => {
+            return s3Bucket.deleteObject({
+                Bucket: db.S3.BUCKET_CATEGORY_PATH,
+                Key: key
+            }, (err, data) => {
+                if (err) return reject(err);
+                if (data) return resolve(data);
+            })
+        });
+}
 
 function s3BucketInsert(images) {
     AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
