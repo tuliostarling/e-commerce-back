@@ -105,7 +105,7 @@ exports.insertProduct = (req, res, callback) => {
 
 
 exports.getList = (req, res, callback) => {
-    const id = req.body.id;
+    const id = req.params.id;
 
     const query =
         `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 

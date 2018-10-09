@@ -107,28 +107,33 @@ exports.updateCategory = (req, res, callback) => {
 
 // implement cascade delete logic when the category has a relation with products.
 exports.delete = (req, res, callback) => {
-    let id = { id: req.params.id };
+    const id = req.params.id;
 
-    db.knex.transaction(async (trx) => {
+    const selectQuery = `SELECT * FROM category WHERE category.id = ($1)`;
+    const checkProducts = `SELECT * FROM products WHERE products.id_category = ($1)`;
+    const delQuery = `DELETE FROM category WHERE id = ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
         try {
-            let { rows } = trx.select('*').from(TABLE).where({ id: id });
-            console.log(rows);
-            //if (rows.length <= 0) return callback('Categoria nao existe.', 404);
+            let { rows } = await client.query(selectQuery, [id]);
 
-            //let imageResult = await s3BucketRemove(req.body.key_aws);
+            let del = await client.query(delQuery, [id]);
 
-            //console.log(imageResult);
+            if (del) {
+                let result = await s3BucketRemove(rows[0].key_aws);
+                return callback(null, 200, result);
+            }
 
-            //let del = db.knex(TABLE).where(id).del();
         } catch (err) {
-
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
         }
-        let imageResult;
-        console.log(imageResult);
-        if (result > 0 && imageResult) return callback(null, 200, { sucess: true });
-        //}).catch((err) => { return callback(err, 500); });
 
-    });
+    })().catch(err => { return callback(err, 500); })
 
 };
 
