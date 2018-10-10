@@ -8,6 +8,10 @@ const multer = require('multer');
 let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
+
+router.get('/listAll/Products',
+    execute(control.getListMainProduct));
+
 router.get('/listall/',
     execute(control.getAll));
 
@@ -19,6 +23,9 @@ router.get('/listone/:id',
 
 router.post('/add/',
     execute(control.insertProduct));
+
+router.post('/add/subProduct',
+    execute(control.insertSubProduct));
 
 router.post('/addImages/:id',
     upload.array('file', 5),

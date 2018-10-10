@@ -60,38 +60,20 @@ exports.addImages = (req, res, callback) => {
 
 };
 
-exports.insertProduct = (req, res, callback) => {
+exports.insertSubProduct = (req, res, callback) => {
     const product = req.body;
-    let query;
-
-    if (product.defaultProduct) {
-        query = `
-        WITH insertProduct AS (
-            INSERT INTO products(id_category,name,size,amount,price,discount,description,color)
-            VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-            ON   CONFLICT DO NOTHING
-            RETURNING id as product_id
-        )
-        INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
-        VALUES((select product_id from insertProduct),$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id;
-        `;
-
-    } else {
-        query = `INSERT INTO subproducts(id_product,name,size,amount,price,discount,description,color)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING id as product_id;`;
-    }
+    let query = `INSERT INTO subproducts(id_product,material,size,amount,price,discount,color)
+        VALUES($1,$2,$3,$4,$5,$6,$7)`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            const { rows } = await client.query(query,
-                [product.id_fk, product.name, product.size, product.amount, product.price,
-                product.discount, product.description, product.color]);
+            const rows = await client.query(query,
+                [product.id_product, product.material, product.size, product.amount, product.price,
+                product.discount, product.color]);
 
-            if (rows.length > 0) return callback(null, 200, rows);
+            if (rows.rowCount >= 1) return callback(null, 200, rows);
         } catch (err) {
             await client.query('ROLLBACK');
             console.log(err);
@@ -103,12 +85,37 @@ exports.insertProduct = (req, res, callback) => {
 
 };
 
+exports.insertProduct = (req, res, callback) => {
+    const product = req.body;
+    let query = `INSERT INTO products(id_category,name,description,model,type) 
+                VALUES ($1,$2,$3,$4,$5)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const rows = await client.query(query,
+                [product.id_category, product.name, product.description,
+                product.model, product.type])
+
+            if (rows.rowCount >= 1) return callback(null, 200, rows);
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+    })().catch(err => { return callback(err, 500); });
+
+};
 
 exports.getList = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
+        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
 	    FROM products , subproducts , images 
 		WHERE products.id = subproducts.id_product 
         AND images.id_subproduct = subproducts.id 
@@ -120,6 +127,7 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
+            console.log(rows);
             if (rows.length > 0) return callback(null, 200, rows);
         } catch (err) {
             console.log(err);
@@ -132,9 +140,29 @@ exports.getList = (req, res, callback) => {
 
 };
 
+exports.getListMainProduct = (req, res, callback) => {
+    const query = `SELECT * from products`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query);
+            if (rows.length > 0) return callback(null, 200, rows);
+            
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); });
+};
+
 exports.getAll = (req, res, callback) => {
 
-    const query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,subproducts.name, subproducts.id_product, subproducts.price, images.location_aws 
+    const query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws 
     FROM products , subproducts , images 
     WHERE products.id = subproducts.id_product 
     AND images.id_subproduct = subproducts.id 
@@ -160,11 +188,12 @@ exports.getOne = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `select subproducts.id as id_subproduct, subproducts.name, subproducts.size, subproducts.amount, subproducts.price,
-             subproducts.discount , subproducts.description, subproducts.color, subproducts.id_product,
+        `select subproducts.id as id_subproduct, products.name, subproducts.size, subproducts.amount, subproducts.price,
+             subproducts.discount , products.description, subproducts.color, subproducts.id_product,
                 images.id, images.location_aws
-	                from subproducts , images
-    	                where subproducts.id = ($1);
+	                from products, subproducts, images 
+                        where subproducts.id = ($1)
+                        and products.id = subproducts.id_product;
         `;
 
     (async () => {
