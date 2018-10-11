@@ -8,6 +8,8 @@ const multer = require('multer');
 let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
+router.get('/listAll/Promotions',
+    execute(control.getAllPromotions));
 
 router.get('/listAll/Products',
     execute(control.getListMainProduct));

@@ -62,8 +62,8 @@ exports.addImages = (req, res, callback) => {
 
 exports.insertSubProduct = (req, res, callback) => {
     const product = req.body;
-    let query = `INSERT INTO subproducts(id_product,material,size,amount,price,discount,color)
-        VALUES($1,$2,$3,$4,$5,$6,$7)`;
+    let query = `INSERT INTO subproducts(id_product,material,size,amount,price,old_price,promotion,discount,color)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id as id_subproduct`;
 
     (async () => {
         const client = await pool.connect();
@@ -71,7 +71,7 @@ exports.insertSubProduct = (req, res, callback) => {
         try {
             const rows = await client.query(query,
                 [product.id_product, product.material, product.size, product.amount, product.price,
-                product.discount, product.color]);
+                product.old_price, product.promotion, product.discount, product.color]);
 
             if (rows.rowCount >= 1) return callback(null, 200, rows);
         } catch (err) {
@@ -127,7 +127,7 @@ exports.getList = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            console.log(rows);
+
             if (rows.length > 0) return callback(null, 200, rows);
         } catch (err) {
             console.log(err);
@@ -149,7 +149,7 @@ exports.getListMainProduct = (req, res, callback) => {
         try {
             const { rows } = await client.query(query);
             if (rows.length > 0) return callback(null, 200, rows);
-            
+
         } catch (err) {
             console.log(err);
             throw err;
@@ -188,8 +188,8 @@ exports.getOne = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `select subproducts.id as id_subproduct, products.name, subproducts.size, subproducts.amount, subproducts.price,
-             subproducts.discount , products.description, subproducts.color, subproducts.id_product,
+        `select subproducts.id as id_subproduct, products.name, subproducts.size, subproducts.amount, subproducts.price, subproduct.old_price,
+             subproducts.promotion,subproducts.discount , products.description, subproducts.color, subproducts.id_product, 
                 images.id, images.location_aws
 	                from products, subproducts, images 
                         where subproducts.id = ($1)
@@ -209,6 +209,8 @@ exports.getOne = (req, res, callback) => {
                 size: rows[0].size,
                 amount: rows[0].amount,
                 price: rows[0].price,
+                old_price: rows[0].old_price,
+                promotion: rows[0].promotion,
                 discount: rows[0].discount,
                 description: rows[0].description,
                 color: rows[0].color,
@@ -228,6 +230,39 @@ exports.getOne = (req, res, callback) => {
     })().catch(err => { return callback(err, null); });
 };
 
+exports.getAllPromotions = (req, res, callback) => {
 
+    let query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws 
+    FROM products , subproducts , images 
+    WHERE products.id = subproducts.id_product 
+	AND subproducts.promotion = true
+    AND images.id_subproduct = subproducts.id 
+    `;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const { rows } = await client.query(query);
+
+            if (rows.length > 0) return callback(null, 200, rows)
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, null); });
+};
+
+exports.delete = (req,res,callback) => {
+
+};
+
+exports.update = (req,res,callback) => {
+
+};
 
 
