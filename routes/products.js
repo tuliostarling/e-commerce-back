@@ -8,36 +8,51 @@ const multer = require('multer');
 let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
+// General Routes.
 router.get('/listAll/Promotions',
     execute(control.getAllPromotions));
-
-router.get('/listAll/Products',
-    execute(control.getListMainProduct));
-
-router.get('/listall/',
-    execute(control.getAll));
-
-router.get('/listBycategory/:id',
-    execute(control.getList));
-
-router.get('/listone/:id',
-    execute(control.getOne));
-
-router.post('/add/',
-    execute(control.insertProduct));
-
-router.post('/add/subProduct',
-    execute(control.insertSubProduct));
 
 router.post('/addImages/:id',
     upload.array('file', 5),
     execute(control.addImages));
 
-router.put('/put/',
-    execute(control.updateProduct));
+router.get('/listAll/Products',
+    execute(control.getListMainProduct));
 
-router.delete('/del/',
-    execute(control.delete));
+router.get('/listBycategory/:id',
+    execute(control.getListByCategory));
+
+router.get('/listone/:id',
+    execute(control.getOne));
+
+
+// Main Product Routes.
+
+router.get('/listoneMain/:id',
+    execute(control.getOneMain));
+
+router.post('/add/',
+    execute(control.insertProduct));
+
+router.put('/put/:id',
+    execute(control.put));
+
+router.delete('/del/:id',
+    execute(control.del));
+
+// Sub Products Routes.
+
+router.get('/listall/SubProducts/:id',
+    execute(control.getAllSubProduct));
+
+router.post('/addSubProduct/:id',
+    execute(control.insertSubProduct));
+
+router.put('/putSubProduct/:id',
+    execute(control.putSubProduct));
+
+router.delete('/delSubProduct/:id',
+    execute(control.delSubProduct));
 
 
 module.exports = router;
