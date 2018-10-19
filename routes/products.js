@@ -19,7 +19,7 @@ router.post('/addImages/:id',
 router.get('/listAll/Products',
     execute(control.getListMainProduct));
 
-router.get('/listBycategory/:id',
+router.get('/listBycategory/:id/:page',
     execute(control.getListByCategory));
 
 router.get('/listone/:id',

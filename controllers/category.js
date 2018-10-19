@@ -110,7 +110,6 @@ exports.delete = (req, res, callback) => {
     const id = req.params.id;
 
     const selectQuery = `SELECT * FROM category WHERE category.id = ($1)`;
-    const checkProducts = `SELECT * FROM products WHERE products.id_category = ($1)`;
     const delQuery = `DELETE FROM category WHERE id = ($1)`;
 
     (async () => {

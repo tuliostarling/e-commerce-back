@@ -55,23 +55,41 @@ exports.getListMainProduct = (req, res, callback) => {
 
 exports.getAllSubProduct = (req, res, callback) => {
     const id = req.params.id;
-    
-    // const offsetValue = 10 * req.params.page;
-    // LIMIT 10 OFFSET ($1)
-    // DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct,  images.location_aws 
-    // AND images.id_subproduct = subproducts.id 
 
-    const query = `SELECT subproducts.id_product, subproducts.price, subproducts.size, subproducts.amount, subproducts.price, subproducts.old_price,
-    subproducts.promotion, subproducts.discount, subproducts.color
-    FROM subproducts
-    WHERE subproducts.id_product = ($1)
-    `;
+    const query = `SELECT subproducts.id,
+                          subproducts.size,
+                          subproducts.amount,
+                          subproducts.price,
+                          subproducts.old_price,
+                          subproducts.promotion,
+                          subproducts.discount,
+                          subproducts.color,
+                          subproducts.material,
+                          subproducts.id_product,
+                          json_agg(json_build_object('url',images.location_aws,'key',images.key_aws)) as images
+                    FROM subproducts, images
+                    WHERE id_product = $1
+                    AND images.id_subproduct = subproducts.id
+                    GROUP BY subproducts.id;`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
             const { rows } = await client.query(query, [id]);
+
+            // rows.reduce((acc, row) => {
+            //     const found = acc.find(r => r.id === row.id);
+            //     if (found) {
+            //         found.urls.push(row.location_aws);
+            //     } else {
+            //         row.urls = [row.location_aws];
+            //         delete row.location_aws;
+            //         acc.push(row);
+            //     }
+            //     return acc;
+            // }, []);
+
             if (rows.length > 0) return callback(null, 200, rows);
         } catch (err) {
             console.log(err);
@@ -85,22 +103,27 @@ exports.getAllSubProduct = (req, res, callback) => {
 
 exports.getListByCategory = (req, res, callback) => {
     const id = req.params.id;
+    const offset = req.params.page * 16;
 
     const query =
-        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws, images.id 
-	    FROM products , subproducts , images 
-		WHERE products.id = subproducts.id_product 
+        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id,products.name, subproducts.id_product, subproducts.price,
+        images.location_aws, images.id 
+	    FROM products , subproducts , images
+		WHERE products.id_category = ($1)
         AND images.id_subproduct = subproducts.id 
-        AND id_category = ($1);
+        LIMIT 16 OFFSET ($2)
         `;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            const { rows } = await client.query(query, [id]);
+            const total = await client.query(`SELECT count(*) from subproducts`);
 
-            if (rows.length > 0) return callback(null, 200, rows);
+            const { rows } = await client.query(query, [id, offset]);
+            console.log(rows);
+
+            if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
         } catch (err) {
             console.log(err);
             throw err;
@@ -116,12 +139,13 @@ exports.getOne = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `select subproducts.id as id_subproduct, products.name, subproducts.size, subproducts.amount, subproducts.price, subproducts.old_price,
-             subproducts.promotion,subproducts.discount , products.description, subproducts.color, subproducts.id_product, 
-                images.id, images.location_aws
-	                from products, subproducts, images 
-                        where subproducts.id = ($1)
-                        and products.id = subproducts.id_product;
+        `SELECT subproducts.id AS id_subproduct, subproducts.size, subproducts.amount, subproducts.price, subproducts.old_price,
+            subproducts.promotion,subproducts.discount, subproducts.color, subproducts.id_product, products.name, products.description,
+            products.model, products.type, images.id, images.location_aws
+	                FROM products, subproducts, images 
+                        WHERE subproducts.id = ($1)
+                        AND products.id = subproducts.id_product
+                        AND images.id_subproduct = subproducts.id;;
         `;
 
     (async () => {
@@ -129,7 +153,7 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-
+            console.log(rows);
             let imagesURL = rows.map(x => x.location_aws);
             let productObj = {
                 id: rows[0].id_subproduct,
@@ -208,32 +232,6 @@ exports.addImages = (req, res, callback) => {
             client.release();
         }
     })().catch(err => { return callback(err, 500); });
-
-    function s3BucketInsert(images) {
-        AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
-        const s3Bucket = new AWS.S3();
-        const results = [];
-        return new Promise(
-            (resolve, reject) => {
-                images.map((item) => {
-                    let params = {
-                        Bucket: db.S3.BUCKET_PRODUCTS_PATH,
-                        Key: item.originalname,
-                        Body: item.buffer,
-                        ContentType: item.mimetype,
-                        ACL: 'public-read'
-                    };
-
-                    return s3Bucket.upload(params, (err, result) => {
-                        if (err) return reject(err);
-                        results.push(result);
-                        if (results.length == images.length) return resolve(results);
-
-                    });
-                });
-            });
-    }
-
 };
 
 exports.insertSubProduct = (req, res, callback) => {
@@ -250,7 +248,7 @@ exports.insertSubProduct = (req, res, callback) => {
             const { rows } = await client.query(query,
                 [id_product, product.material, product.size, product.amount, product.price,
                     product.old_price, product.promotion, product.discount, product.color]);
-            
+
             if (rows.length >= 1) return callback(null, 200, rows);
         } catch (err) {
             await client.query('ROLLBACK');
@@ -310,7 +308,30 @@ exports.put = (req, res, callback) => {
 };
 
 exports.putSubProduct = (req, res, callback) => {
+    const id = req.params.id;
+    let newObj = {};
 
+    if (req.body.id_product != null) newObj.id_product = req.body.id_product;
+
+    if (req.body.material != null) newObj.material = req.body.material;
+
+    if (req.body.size != null) newObj.size = req.body.size;
+
+    if (req.body.amount != null) newObj.amount = req.body.amount;
+
+    if (req.body.price != null) newObj.price = req.body.price;
+
+    if (req.body.old_price != null) newObj.old_price = req.body.old_price;
+
+    if (req.body.promotion != null) newObj.promotion = req.body.promotion;
+
+    if (req.body.discount != null) newObj.discount = req.body.discount;
+
+    if (req.body.color != null) newObj.color = req.body.color;
+
+    db.knex('products').where({ id: id }).update(newObj).then(result => {
+        if (result > 0) return callback(null, 200, { sucess: true });
+    }).catch((err) => { console.log(err); return callback(err, 500); });
 };
 
 exports.del = (req, res, callback) => {
@@ -341,7 +362,73 @@ exports.del = (req, res, callback) => {
 };
 
 exports.delSubProduct = (req, res, callback) => {
+    const id = req.params.id;
+
+    const selectQuery = `SELECT * FROM subproducts , images 
+                        WHERE subproducts.id = ($1)
+                        AND images.id_subproduct = ($1)`;
+    const delQuery = `DELETE FROM subproducts WHERE id = ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            let { rows } = await client.query(selectQuery, [id]);
+            if (rows.length >= 1) {
+                let toot = await s3BucketRemove(rows[0].key_aws);
+                console.log(toot);
+                let delResult = await client.query(delQuery, [id]);
+                return callback(null, 200, delResult);
+            }
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); })
 
 };
 
 
+function s3BucketRemove(key) {
+    AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
+    const s3Bucket = new AWS.S3();
+    return new Promise(
+        (resolve, reject) => {
+            return s3Bucket.deleteObject({
+                Bucket: db.S3.BUCKET_PRODUCTS_PATH,
+                Key: key
+            }, (err, data) => {
+                if (err) return reject(err);
+                if (data) return resolve(data);
+            })
+        });
+}
+
+function s3BucketInsert(images) {
+    AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
+    const s3Bucket = new AWS.S3();
+    const results = [];
+    return new Promise(
+        (resolve, reject) => {
+            images.map((item) => {
+                let params = {
+                    Bucket: db.S3.BUCKET_PRODUCTS_PATH,
+                    Key: item.originalname,
+                    Body: item.buffer,
+                    ContentType: item.mimetype,
+                    ACL: 'public-read'
+                };
+
+                return s3Bucket.upload(params, (err, result) => {
+                    if (err) return reject(err);
+                    results.push(result);
+                    if (results.length == images.length) return resolve(results);
+
+                });
+            });
+        });
+}
