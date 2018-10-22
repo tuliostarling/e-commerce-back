@@ -7,19 +7,20 @@ const AWS = require('aws-sdk');
 
 
 exports.getAllPromotions = (req, res, callback) => {
+    const offset = req.params.page * 16;
 
     let query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws 
     FROM products , subproducts , images 
     WHERE products.id = subproducts.id_product 
 	AND subproducts.promotion = true
     AND images.id_subproduct = subproducts.id 
-    `;
+    LIMIT 16 OFFSET ($1)`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            const { rows } = await client.query(query);
+            const { rows } = await client.query(query, [offset]);
 
             if (rows.length > 0) return callback(null, 200, rows)
             return callback('Sem produtos em Promoção', 401)
@@ -55,6 +56,7 @@ exports.getListMainProduct = (req, res, callback) => {
 
 exports.getAllSubProduct = (req, res, callback) => {
     const id = req.params.id;
+    //const offset = req.params.page * 16;
 
     const query = `SELECT subproducts.id,
                           subproducts.size,
@@ -70,8 +72,9 @@ exports.getAllSubProduct = (req, res, callback) => {
                     FROM subproducts, images
                     WHERE id_product = $1
                     AND images.id_subproduct = subproducts.id
-                    GROUP BY subproducts.id;`;
-
+                    GROUP BY subproducts.id
+                    ORDER BY subproducts.id ASC;`;
+    //LIMIT 16 OFFSET ($2)
     (async () => {
         const client = await pool.connect();
 
@@ -90,7 +93,7 @@ exports.getAllSubProduct = (req, res, callback) => {
             //     return acc;
             // }, []);
 
-            if (rows.length > 0) return callback(null, 200, rows);
+            if (rows.length > 0) return callback(null, 200, { rows: rows });
         } catch (err) {
             console.log(err);
             throw err;
