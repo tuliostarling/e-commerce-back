@@ -16,7 +16,7 @@ router.post('/addImages/:id',
     upload.array('file', 5),
     execute(control.addImages));
 
-router.get('/listAll/Products/:page',
+router.get('/listAll/Products/',
     execute(control.getListMainProduct));
 
 router.get('/listBycategory/:id/:page',
