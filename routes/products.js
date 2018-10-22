@@ -9,7 +9,7 @@ let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
 // General Routes.
-router.get('/listAll/Promotions',
+router.get('/listAll/Promotions/:page',
     execute(control.getAllPromotions));
 
 router.post('/addImages/:id',

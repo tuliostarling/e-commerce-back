@@ -20,9 +20,10 @@ exports.getAllPromotions = (req, res, callback) => {
         const client = await pool.connect();
 
         try {
+            const total = await client.query(`SELECT count(*) from subproducts where promotion = true`);
             const { rows } = await client.query(query, [offset]);
 
-            if (rows.length > 0) return callback(null, 200, rows)
+            if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
             return callback('Sem produtos em Promoção', 401)
         } catch (err) {
             console.log(err);
