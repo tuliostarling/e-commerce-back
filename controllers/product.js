@@ -143,13 +143,13 @@ exports.getOne = (req, res, callback) => {
     const id = req.params.id;
 
     const query =
-        `SELECT subproducts.id AS id_subproduct, subproducts.size, subproducts.amount, subproducts.price, subproducts.old_price,
+        `SELECT subproducts.id, subproducts.size, subproducts.amount, subproducts.price, subproducts.old_price,
             subproducts.promotion,subproducts.discount, subproducts.color, subproducts.id_product, products.name, products.description,
             products.model, products.type, images.id, images.location_aws
 	                FROM products, subproducts, images 
                         WHERE subproducts.id = ($1)
                         AND products.id = subproducts.id_product
-                        AND images.id_subproduct = subproducts.id;;
+                        AND images.id_subproduct = subproducts.id;
         `;
 
     (async () => {
@@ -157,10 +157,9 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            console.log(rows);
             let imagesURL = rows.map(x => x.location_aws);
             let productObj = {
-                id: rows[0].id_subproduct,
+                id: rows[0].id,
                 name: rows[0].name,
                 size: rows[0].size,
                 amount: rows[0].amount,
@@ -175,7 +174,6 @@ exports.getOne = (req, res, callback) => {
             };
 
             if (rows.length > 0) return callback(null, 200, productObj);
-
         } catch (err) {
             console.log(err);
             throw err;
