@@ -113,7 +113,8 @@ exports.getListByCategory = (req, res, callback) => {
         `SELECT DISTINCT ON (images.id_subproduct) subproducts.id,products.name, subproducts.id_product, subproducts.price,
         images.location_aws, images.id 
 	    FROM products , subproducts , images
-		WHERE products.id_category = ($1)
+        WHERE products.id_category = ($1)
+        AND products.id = subproducts.id_product
         AND images.id_subproduct = subproducts.id 
         LIMIT 16 OFFSET ($2)
         `;
