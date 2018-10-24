@@ -48,6 +48,10 @@ router.get('/listall/SubProducts/:id',
 router.post('/addSubProduct/:id',
     execute(control.insertSubProduct));
 
+router.put('/putImages/:id',
+    upload.array('file', 5),
+    execute(control.putImages));
+
 router.put('/putSubProduct/:id',
     execute(control.putSubProduct));
 

@@ -220,6 +220,7 @@ exports.addImages = (req, res, callback) => {
 
             const s3Result = await s3BucketInsert(images);
 
+            //console.log(s3Result);
             for (let i = 0; i < s3Result.length; i++) {
                 await client.query(imageQuery,
                     [id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
@@ -331,7 +332,7 @@ exports.putSubProduct = (req, res, callback) => {
 
     if (req.body.color != null) newObj.color = req.body.color;
 
-    db.knex('products').where({ id: id }).update(newObj).then(result => {
+    db.knex('subproducts').where({ id: id }).update(newObj).then(result => {
         if (result > 0) return callback(null, 200, { sucess: true });
     }).catch((err) => { console.log(err); return callback(err, 500); });
 };
@@ -394,6 +395,12 @@ exports.delSubProduct = (req, res, callback) => {
 
 };
 
+exports.putImages = (req, res, callback) => {
+    console.log(req.params.id);
+    console.log(req.files);
+    console.log(req.body);
+}
+
 
 function s3BucketRemove(key) {
     AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
@@ -424,9 +431,10 @@ function s3BucketInsert(images) {
                     ContentType: item.mimetype,
                     ACL: 'public-read'
                 };
-
+                console.log(params)
                 return s3Bucket.upload(params, (err, result) => {
                     if (err) return reject(err);
+                    console.log(result);
                     results.push(result);
                     if (results.length == images.length) return resolve(results);
 
