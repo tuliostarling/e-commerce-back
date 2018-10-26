@@ -111,7 +111,7 @@ exports.getListByCategory = (req, res, callback) => {
 
     const query =
         `SELECT DISTINCT ON (images.id_subproduct) subproducts.id,products.name, subproducts.id_product, subproducts.price,
-        images.location_aws, images.id 
+        images.location_aws, images.id as id_image
 	    FROM products , subproducts , images
         WHERE products.id_category = ($1)
         AND products.id = subproducts.id_product
@@ -124,10 +124,8 @@ exports.getListByCategory = (req, res, callback) => {
 
         try {
             const total = await client.query(`SELECT count(*) from subproducts`);
-
             const { rows } = await client.query(query, [id, offset]);
-            console.log(rows);
-
+            
             if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
         } catch (err) {
             console.log(err);
@@ -158,6 +156,7 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
+            
             let imagesURL = rows.map(x => x.location_aws);
             let productObj = {
                 id: rows[0].id,
