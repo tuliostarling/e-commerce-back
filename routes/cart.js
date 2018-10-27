@@ -10,7 +10,7 @@ router.get('/loadCart/:id',
 router.post('/addCart',
     execute(control.addtoCart));
 
-router.delete('/removeCart',
+router.delete('/removeCart/:id',
     execute(control.removefromCart));
 
 router.post('/increaseAmount',
