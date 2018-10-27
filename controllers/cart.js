@@ -23,7 +23,7 @@ exports.getItems = (req, res, callback) => {
             const { rows } = await client.query(query, [id_cart]);
 
             if (rows.length > 0) {
-                let totalPrice = rows.map(x => x.price * x.amount)
+                let totalPrice = rows.map(x => x.price * x.qtd)
                     .reduce((curr, next) => curr + next, 0);
                 let pricesObj = {
                     finalValue: totalPrice
