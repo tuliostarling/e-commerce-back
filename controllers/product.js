@@ -69,7 +69,7 @@ exports.getAllSubProduct = (req, res, callback) => {
                           subproducts.color,
                           subproducts.material,
                           subproducts.id_product,
-                          json_agg(json_build_object('url',images.location_aws,'key',images.key_aws)) as images
+                          json_agg(json_build_object('url',images.location_aws,'key',images.key_aws,'id',images.id)) as images
                     FROM subproducts, images
                     WHERE id_product = $1
                     AND images.id_subproduct = subproducts.id
@@ -125,7 +125,7 @@ exports.getListByCategory = (req, res, callback) => {
         try {
             const total = await client.query(`SELECT count(*) from subproducts`);
             const { rows } = await client.query(query, [id, offset]);
-            
+
             if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
         } catch (err) {
             console.log(err);
@@ -156,7 +156,6 @@ exports.getOne = (req, res, callback) => {
 
         try {
             const { rows } = await client.query(query, [id]);
-            
             let imagesURL = rows.map(x => x.location_aws);
             let productObj = {
                 id: rows[0].id,
@@ -220,7 +219,6 @@ exports.addImages = (req, res, callback) => {
 
             const s3Result = await s3BucketInsert(images);
 
-            //console.log(s3Result);
             for (let i = 0; i < s3Result.length; i++) {
                 await client.query(imageQuery,
                     [id, s3Result[i].VersionId, s3Result[i].Location, s3Result[i].Bucket, s3Result[i].Key, s3Result[i].ETag]);
@@ -396,6 +394,45 @@ exports.delSubProduct = (req, res, callback) => {
 };
 
 exports.putImages = (req, res, callback) => {
+    const idsubproduct = req.params.id;
+    const files = req.files;
+    const { key, id } = req.body;
+
+    const putQuery = `UPDATE images 
+    SET versionID_aws = ($1), location_aws = ($2), bucket_aws = ($3), key_aws = ($4), etag_aws = ($5)
+    where id_subproduct = ($6)`;
+    const delquery = `DELETE FROM images where id = ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            let result;
+
+            
+
+            // for (let i = 0; i < key.length; i++) {
+            //     await s3BucketRemove(key[i]);
+
+            //     if (files.length >= 1) {
+            //         result = await s3BucketInsert(files[i]);
+            //         await client.query(putQuery,
+            //             [id, result[i].VersionId, result[i].Location, result[i].Bucket, result[i].Key, result[i].ETag, idsubproduct]);
+            //     } else {
+            //         await client.query(delquery, [id[i]]);
+            //     }
+            // }
+
+            //            return callback(null, 200, { sucess: true })
+
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+    })().catch(err => { return callback(err, 500); })
+
     console.log(req.params.id);
     console.log(req.files);
     console.log(req.body);
@@ -431,10 +468,10 @@ function s3BucketInsert(images) {
                     ContentType: item.mimetype,
                     ACL: 'public-read'
                 };
-                console.log(params)
+
                 return s3Bucket.upload(params, (err, result) => {
                     if (err) return reject(err);
-                    console.log(result);
+
                     results.push(result);
                     if (results.length == images.length) return resolve(results);
 
