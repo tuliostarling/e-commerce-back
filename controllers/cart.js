@@ -8,10 +8,12 @@ exports.getItems = (req, res, callback) => {
     const id_cart = req.params.id;
 
     const query = `
-    SELECT DISTINCT subproducts.id, subproducts.name, subproducts.price, subproducts.size, items.amount, items.id
-    FROM items, cart, subproducts
+    SELECT DISTINCT subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, items.id as id_item, images.location_aws
+    FROM items, cart, subproducts, products, images
     where cart.id = ($1)
     and subproducts.id = items.id_subproduct
+	and subproducts.id_product = products.id
+	and items.id_subproduct = images.id_subproduct limit 1
     `;
 
     (async () => {
@@ -21,7 +23,7 @@ exports.getItems = (req, res, callback) => {
             const { rows } = await client.query(query, [id_cart]);
 
             if (rows.length > 0) {
-                let totalPrice = rows.map(x => x.price * x.amount)
+                let totalPrice = rows.map(x => x.price * x.qtd)
                     .reduce((curr, next) => curr + next, 0);
                 let pricesObj = {
                     finalValue: totalPrice
@@ -45,12 +47,12 @@ exports.getItems = (req, res, callback) => {
 
 
 exports.addtoCart = (req, res, callback) => {
-    const id_cart = req.body.id_cart;
-    const id_subproduct = req.body.id_product;
-    const amount = req.body.amount;
+    const id_cart = req.body[0].id_cart;
+    const id_subproduct = req.body[0].id_subproduct;
+    const qtd = req.body[0].amount;
 
     const query = `
-    INSERT INTO items(id_cart,id_subproduct,amount) 
+    INSERT INTO items(id_cart,id_subproduct,qtd) 
     SELECT ($1),($2),($3)
     WHERE NOT EXISTS (
     SELECT id_subproduct
@@ -61,7 +63,7 @@ exports.addtoCart = (req, res, callback) => {
         const client = await pool.connect();
 
         try {
-            const rows = await client.query(query, [id_cart, id_subproduct, amount]);
+            const rows = await client.query(query, [id_cart, id_subproduct, qtd]);
             if (rows.rowCount > 0) return callback(null, 200, rows);
             return callback('Produto já esta no carrinho', 401);
         } catch (err) {
@@ -76,17 +78,18 @@ exports.addtoCart = (req, res, callback) => {
 };
 
 exports.increaseAmount = (req, res, callback) => {
-    const updateObj = req.body;
+    const amount = req.body[0].amount;
+    const id_item = req.body[0].id_item;
 
     let query = `
-    UPDATE items SET amount = ($1)
+    UPDATE items SET qtd = ($1)
     WHERE items.id = ($2)`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            const rows = await client.query(query, [updateObj.amount, updateObj.id_item]);
+            const rows = await client.query(query, [amount, id_item]);
             if (rows.rowCount > 0) return callback(null, 200);
         } catch (err) {
             console.log(err);
@@ -100,7 +103,7 @@ exports.increaseAmount = (req, res, callback) => {
 
 
 exports.removefromCart = (req, res, callback) => {
-    const id_subproduct = req.body.id;
+    const id_subproduct = req.params.id;
 
     const query = `DELETE FROM items WHERE id_subproduct = ($1);`;
 
