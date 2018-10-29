@@ -22,13 +22,12 @@ exports.add = (req, res, callback) => {
             .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                let url = 'localhost:3000/confirm/' + hash + '/';
+                let url = 'tutuguerra.com.br/confirm/' + hash + '/';
 
                 mail.send({
                     to: email,
                     subject: 'Parabéns pela sua conta na Tutu Guerra',
-                    html: `Olá ${email}, <br><br>\n 
-                    Para confirmar seu cadastro clique em ${url}`
+                    html: `Olá ${email}, Para confirmar seu cadastro acesse o link a seguir ${url}`
                 }, (err) => {
                     if (err) return callback(err, 500);
                     return callback(null, 200, { id: obj._id });
