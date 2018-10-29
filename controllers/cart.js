@@ -8,12 +8,13 @@ exports.getItems = (req, res, callback) => {
     const id_cart = req.params.id;
 
     const query = `
-    SELECT DISTINCT subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, items.id as id_item, images.location_aws
+    SELECT DISTINCT ON 
+	(subproducts.id) subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, items.id as id_item, images.location_aws
     FROM items, cart, subproducts, products, images
-    where cart.id = ($1)
-    and subproducts.id = items.id_subproduct
-	and subproducts.id_product = products.id
-	and items.id_subproduct = images.id_subproduct limit 1
+    WHERE cart.id = ($1) 
+	AND subproducts.id = items.id_subproduct
+	AND subproducts.id = images.id_subproduct
+	ORDER BY subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, id_item, images.location_aws
     `;
 
     (async () => {

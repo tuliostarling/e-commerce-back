@@ -7,6 +7,7 @@ const product = require('./products');
 const category = require('./category');
 const coupon = require('./coupon');
 const cart = require('./cart');
+const wishlist = require('./wishlist');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 
@@ -16,6 +17,7 @@ router.use('/product', product);
 router.use('/category', category);
 router.use('/coupon', coupon);
 router.use('/cart', cart);
+router.use('/wishlist', wishlist);
 
 
 router.use('/auth', authentication); // Login
