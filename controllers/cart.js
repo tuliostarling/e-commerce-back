@@ -19,6 +19,7 @@ exports.getItems = (req, res, callback) => {
 
     (async () => {
         const client = await pool.connect();
+        const qtdOptions = [0, 1, 2, 3, 4, 5, 6];
 
         try {
             const { rows } = await client.query(query, [id_cart]);
@@ -30,11 +31,15 @@ exports.getItems = (req, res, callback) => {
                     finalValue: totalPrice
                 };
 
+                // let toot = rows.map(x => x.qtd).reduce((curr,next) => {return curr = curr + next - 1}, [])
+                // console.log(toot);
+                // console.log(rows);
+
                 if (totalPrice >= 80) pricesObj.installments2x = totalPrice / 2;
                 if (totalPrice >= 140) pricesObj.installments3x = totalPrice / 3;
                 if (totalPrice >= 300) pricesObj.installments4x = totalPrice / 4;
 
-                return callback(null, 200, [rows, pricesObj]);
+                return callback(null, 200, {rows, pricesObj, qtdOptions});
             }
         } catch (err) {
             console.log(err);
