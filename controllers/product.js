@@ -407,23 +407,36 @@ exports.putImages = (req, res, callback) => {
         const client = await pool.connect();
 
         try {
-            let result;
+            // let result = [];
+            // let loop;
 
-            
+            // if (key != undefined) {
+            //     if(typeof key !== 'object') {
+            //         key = [{ key: key }]
+            //     }
 
-            // for (let i = 0; i < key.length; i++) {
-            //     await s3BucketRemove(key[i]);
+            //     for (let i = 0; i < key.length; i++) {
+            //         result.push({ key: key[i], id: id[i] });
+            //     }
+                
+            //     loop = result.length;
+            // } else if (files != undefined) {
+            //     loop = files.length;
+            // }
 
+            // for (let i = 0; i < loop; i++) {
             //     if (files.length >= 1) {
             //         result = await s3BucketInsert(files[i]);
             //         await client.query(putQuery,
             //             [id, result[i].VersionId, result[i].Location, result[i].Bucket, result[i].Key, result[i].ETag, idsubproduct]);
+            //     } else if (files.length == 0) {
+            //         await s3BucketRemove(result[i].key);
             //     } else {
-            //         await client.query(delquery, [id[i]]);
+            //         await client.query(delquery, [result[i].id]);
             //     }
             // }
 
-            //            return callback(null, 200, { sucess: true })
+            // return callback(null, 200, { sucess: true })
 
         } catch (err) {
             console.log(err);
@@ -432,10 +445,6 @@ exports.putImages = (req, res, callback) => {
             client.release();
         }
     })().catch(err => { return callback(err, 500); })
-
-    console.log(req.params.id);
-    console.log(req.files);
-    console.log(req.body);
 }
 
 

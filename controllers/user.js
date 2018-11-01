@@ -10,7 +10,7 @@ const pg = require('pg');
 const pool = new pg.Pool(db.conn);
 const TABLE = 'users';
 
-
+// TTL não está funcionando
 exports.add = (req, res, callback) => {
 
     db.knex('users').where({ email: req.body.email }).then(result => {
@@ -30,7 +30,7 @@ exports.add = (req, res, callback) => {
                     html: `Olá ${email}, Para confirmar seu cadastro acesse o link a seguir ${url}`
                 }, (err) => {
                     if (err) return callback(err, 500);
-                    return callback(null, 200, { id: obj._id });
+                    return callback(null, 200, { success: true });
                 });
             });
 
@@ -61,8 +61,16 @@ exports.confirmUser = (req, res, callback) => {
                     const { rows } = await client.query(queryUser,
                         [newUser.name, newUser.password, newUser.email, newUser.hashtoken, newUser.admin]);
 
-                    let queryCart = `INSERT INTO cart(id_user) VALUES ($1)`;
-                    await client.query(queryCart, [rows[0].id]);
+                    let query = `WITH insCart AS (
+                                    INSERT INTO cart(id_user) 
+                                    VALUES ($1)
+                                    ON CONFLICT DO NOTHING
+                                    RETURNING id_user
+                                    )
+                                    INSERT INTO wishlist(id_user) 
+                                    SELECT id_user FROM insCart
+                                    `;
+                    await client.query(query, [rows[0].id]);
 
                     await client.query('COMMIT');
                     user.remove();
@@ -115,9 +123,11 @@ exports.authLogin = (req, res, callback) => {
 
             let cart = await trx.select('*').from('cart').where({ id_user: obj[0].id });
 
+            let wishlist = await trx.select('*').from('wishlist').where({ id_user: obj[0].id });
+
             const hash = obj[0].hashtoken;
 
-            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id }) });
+            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id }) });
 
         } catch (err) {
             return callback(err, 500);
