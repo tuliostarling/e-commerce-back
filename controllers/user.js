@@ -22,7 +22,7 @@ exports.add = (req, res, callback) => {
             .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                let url = 'tutuguerra.com.br/confirm/' + hash + '/';
+                let url = 'www.tutuguerra.com.br/confirm/' + hash + '/';
 
                 mail.send({
                     to: email,
@@ -39,10 +39,9 @@ exports.add = (req, res, callback) => {
 
 exports.confirmUser = (req, res, callback) => {
     let { hex } = req.params;
-
     if (!hex) return callback('URL INSERIDA INCORRETA', 400);
 
-    bufferData.findOneAndUpdate({ hashed: { $exists: true } }, { $unset: { expDate: 1 } }
+    bufferData.findOneAndUpdate({ hashed: { $exists: true } }, { $unset: { createdAt: 1 } }
         , { multi: false }, (err, user) => {
             if (err)
                 return callback(err, 500);
@@ -74,7 +73,7 @@ exports.confirmUser = (req, res, callback) => {
 
                     await client.query('COMMIT');
                     user.remove();
-                    return res.redirect('tutuguerra.com');// callback(null, 200, 'Usuario confirmado com sucesso') REFATORAR Redicionar usuario para pagina do ecommerce apos confirmar a conta.
+                    return callback(null, 200, { sucess: true });
                 } catch (err) {
                     await client.query('ROLLBACK');
                     console.log(err);

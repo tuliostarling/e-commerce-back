@@ -10,7 +10,7 @@ const bufferSchema = new Schema({
     password: { type: String, required: true, validade: [validatePassword, 'Tamanho de Senha inválido'] },
     admin: { type: Boolean, required: true },
     hashed: { type: String, required: true },
-    expDate: { type: Date }
+    createdAt: { type: Date }
 });
 
 function validateEmail(email) {
@@ -22,6 +22,6 @@ function validatePassword(password) {
     return password.lenght > 6 && password.lenght < 30;
 };
 
-bufferSchema.index({ expDate: 1 }, { expireAfterSeconds: 3600 })
+bufferSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 })
 
 module.exports = mongoose.model('bufferinfo', bufferSchema);
