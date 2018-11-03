@@ -418,7 +418,6 @@ exports.putImages = (req, res, callback) => {
                 else deleteSingleImage(key, id, client)
 
             } else {
-                console.log('log')  
                 if (Array.isArray(key) && Array.isArray(id)) {
                     for (let i = 0; i < files.length; i++) {
                         await deleteArrayImages(key, id, client);
