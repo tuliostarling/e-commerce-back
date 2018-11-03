@@ -58,7 +58,6 @@ exports.getListMainProduct = (req, res, callback) => {
 exports.getAllSubProduct = (req, res, callback) => {
     const id = req.params.id;
     //const offset = req.params.page * 16;
-
     const query = `SELECT subproducts.id,
                           subproducts.size,
                           subproducts.amount,
@@ -68,20 +67,26 @@ exports.getAllSubProduct = (req, res, callback) => {
                           subproducts.discount,
                           subproducts.color,
                           subproducts.material,
-                          subproducts.id_product,
-                          json_agg(json_build_object('url',images.location_aws,'key',images.key_aws,'id',images.id)) as images
-                    FROM subproducts, images
+                          subproducts.id_product
+                    FROM subproducts
                     WHERE id_product = $1
-                    AND images.id_subproduct = subproducts.id
-                    GROUP BY subproducts.id
                     ORDER BY subproducts.id ASC;`;
     //LIMIT 16 OFFSET ($2)
+    const imgQuery = ` select json_agg(json_build_object('url',images.location_aws,'key',images.key_aws,'id',images.id)) as images
+                        FROM subproducts, images
+                        WHERE id_product = ($1)
+                        AND images.id_subproduct = subproducts.id
+                        GROUP BY subproducts.id
+                        ORDER BY subproducts.id ASC;`;
+
+
     (async () => {
         const client = await pool.connect();
 
         try {
             const { rows } = await client.query(query, [id]);
-
+            const imgRows = await client.query(imgQuery, [id]);
+    
             // rows.reduce((acc, row) => {
             //     const found = acc.find(r => r.id === row.id);
             //     if (found) {
@@ -94,7 +99,7 @@ exports.getAllSubProduct = (req, res, callback) => {
             //     return acc;
             // }, []);
 
-            if (rows.length > 0) return callback(null, 200, { rows: rows });
+            if (rows.length >= 0) return callback(null, 200, { rows: rows, images: imgRows.rows });
         } catch (err) {
             console.log(err);
             throw err;
@@ -365,22 +370,23 @@ exports.del = (req, res, callback) => {
 exports.delSubProduct = (req, res, callback) => {
     const id = req.params.id;
 
-    const selectQuery = `SELECT * FROM subproducts , images 
-                        WHERE subproducts.id = ($1)
-                        AND images.id_subproduct = ($1)`;
+    const selectImgQuery = `SELECT * FROM images WHERE id_subproduct = ($1)`;
+    const deleteImgQuery = `DELETE FROM images WHERE id_subproduct = ($1)`;
     const delQuery = `DELETE FROM subproducts WHERE id = ($1)`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            let { rows } = await client.query(selectQuery, [id]);
-            if (rows.length >= 1) {
-                let toot = await s3BucketRemove(rows[0].key_aws);
-                console.log(toot);
-                let delResult = await client.query(delQuery, [id]);
-                return callback(null, 200, delResult);
+            let { rows } = await client.query(selectImgQuery, [id]);
+            if (rows.length > 1) {
+                for (let i = 0; i < rows.length; i++) {
+                    await s3BucketRemove(rows[i].key_aws);
+                    await client.query(deleteImgQuery, [rows[i].id]);
+                }
             }
+            let delResult = await client.query(delQuery, [id]);
+            return callback(null, 200, delResult);
 
         } catch (err) {
             console.log(err);
@@ -401,52 +407,55 @@ exports.putImages = (req, res, callback) => {
     const putQuery = `UPDATE images 
     SET versionID_aws = ($1), location_aws = ($2), bucket_aws = ($3), key_aws = ($4), etag_aws = ($5)
     where id_subproduct = ($6)`;
-    const delquery = `DELETE FROM images where id = ($1)`;
+    const delQuery = `DELETE FROM images where id = ($1)`;
 
+    // thats a whole shit of if else's bruh 
     (async () => {
         const client = await pool.connect();
-
         try {
-            let result = [];
-            let loop;
+            if (files.length == 0) {
+                if (Array.isArray(key) && Array.isArray(id)) deleteArrayImages(key, id, client);
+                else deleteSingleImage(key, id, client)
 
-            if (key != undefined) {
-                if(typeof key !== 'object') {
-                    key = [{ key: key }]
-                }
-
-                for (let i = 0; i < key.length; i++) {
-                    result.push({ key: key[i], id: id[i] });
-                }
-                
-                loop = result.length;
-            } else if (files != undefined) {
-                loop = files.length;
-            }
-
-            for (let i = 0; i < loop; i++) {
-                if (files.length >= 1) {
+            } else {
+                console.log('log')  
+                if (Array.isArray(key) && Array.isArray(id)) {
+                    for (let i = 0; i < files.length; i++) {
+                        await deleteArrayImages(key, id, client);
+                        result = await s3BucketInsert(files[i]);
+                        await client.query(putQuery,
+                            [id, result[i].VersionId, result[i].Location, result[i].Bucket, result[i].Key, result[i].ETag, idsubproduct]);
+                    }
+                } else {
+                    await deleteSingleImage(key, id);
                     result = await s3BucketInsert(files[i]);
                     await client.query(putQuery,
                         [id, result[i].VersionId, result[i].Location, result[i].Bucket, result[i].Key, result[i].ETag, idsubproduct]);
-                } else if (files.length == 0) {
-                    await s3BucketRemove(result[i].key);
-                } else {
-                    await client.query(delquery, [result[i].id]);
                 }
             }
-
             return callback(null, 200, { sucess: true })
-
         } catch (err) {
             console.log(err);
             throw err;
         } finally {
             client.release();
         }
-    })().catch(err => { return callback(err, 500); })
-}
 
+    })().catch(err => { return callback(err, 500); })
+
+    function deleteArrayImages(key, id, cliente) {
+        for (let i = 0; i < key.length; i++) {
+            let delRes = s3BucketRemove(key[i]);
+            if (delRes) cliente.query(delQuery, [id[i]]);
+        }
+    }
+
+    function deleteSingleImage(key, id, cliente) {
+        let del = s3BucketRemove(key);
+        if (del) cliente.query(delQuery, [id]);
+    }
+
+}
 
 function s3BucketRemove(key) {
     AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });
@@ -470,6 +479,7 @@ function s3BucketInsert(images) {
     return new Promise(
         (resolve, reject) => {
             images.map((item) => {
+                console.log(item);
                 let params = {
                     Bucket: db.S3.BUCKET_PRODUCTS_PATH,
                     Key: item.originalname,
