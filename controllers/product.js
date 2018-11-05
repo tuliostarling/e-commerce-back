@@ -478,7 +478,6 @@ function s3BucketInsert(images) {
     return new Promise(
         (resolve, reject) => {
             images.map((item) => {
-                console.log(item);
                 let params = {
                     Bucket: db.S3.BUCKET_PRODUCTS_PATH,
                     Key: item.originalname,

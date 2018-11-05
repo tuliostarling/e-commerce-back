@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const config = require('./secrets/config');
 const psql = require('./secrets/config');
+const apiRoutes = require('./routes');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -14,7 +15,14 @@ app.use(morgan('[:date[web]] [:response-time ms] [:status] :method :url'));
 app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
-app.use(require('./routes'));
+
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*")
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+    next()
+});
+
+app.use('/api', apiRoutes);
 
 
 mongoose.Promise = global.Promise;
