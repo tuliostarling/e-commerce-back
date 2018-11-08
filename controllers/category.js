@@ -3,26 +3,20 @@
 const db = require('../secrets/config');
 const pg = require('pg');
 const pool = new pg.Pool(db.conn);
+const DB = require('../wrappers/db');
+const POOL = DB.getPool();
 const TABLE = 'category';
 const AWS = require('aws-sdk');
 
 exports.getList = (req, res, callback) => {
     let query = `SELECT DISTINCT ON(category) * FROM category`;
 
-    (async () => {
-        const client = await pool.connect();
-
-        try {
-            const { rows } = await client.query(query);
+    POOL.query(query).then(result => {
+        if (result) {
+            const { rows } = result;
             if (rows.length > 0) return callback(null, 200, rows);
-        } catch (err) {
-            console.log(err);
-            throw err;
-        } finally {
-            client.release();
         }
-
-    })().catch(err => { return callback(err, 500); });
+    }).catch((err) => { return callback(err, 500); });
 };
 
 exports.getOne = (req, res, callback) => {
@@ -88,7 +82,6 @@ exports.addImages = (req, res, callback) => {
     })().catch(err => { return callback(err, 500); });
 };
 
-
 exports.updateCategory = (req, res, callback) => {
     const id = req.params.id;
     let newObj = {};
@@ -105,7 +98,6 @@ exports.updateCategory = (req, res, callback) => {
 
 };
 
-// implement cascade delete logic when the category has a relation with products.
 exports.delete = (req, res, callback) => {
     const id = req.params.id;
 
@@ -135,8 +127,6 @@ exports.delete = (req, res, callback) => {
     })().catch(err => { return callback(err, 500); })
 
 };
-
-
 
 function s3BucketRemove(key) {
     AWS.config.update({ accessKeyId: db.S3.KEY, secretAccessKey: db.S3.SECRET });

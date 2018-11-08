@@ -5,7 +5,6 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const config = require('./secrets/config');
-const psql = require('./secrets/config');
 const apiRoutes = require('./routes');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,12 +15,6 @@ app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
-// app.use(function (req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*")
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
-//     next()
-// });
-
 app.use('/api', apiRoutes);
 
 
@@ -30,7 +23,6 @@ mongoose.connect(config.mongodb, { useNewUrlParser: true }, (err, cb) => {
     if (err) return console.log("Mongo Connection wasn't estabilished ERROR:" + err);
     return console.log("Mongo OK!");
 })
-
 
 /**
  * Start do Servidor
