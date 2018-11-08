@@ -1,5 +1,7 @@
 'use strict';
 const db = require('../secrets/config');
+const pg = require('pg');
+const pool = new pg.Pool(db.conn);
 const TABLE = 'coupons';
 
 exports.addCoupon = (req, res, callback) => {
@@ -32,11 +34,27 @@ exports.getCoupon = (req, res, callback) => {
 };
 
 exports.getAllCoupon = (req, res, callback) => {
+    const offset = req.params.page * 16;
 
-    db.knex.select('*').from(TABLE).then(result => {
-        if (result.length > 0)
-            return callback(null, 200, result);
-    }).catch((err) => { return callback(err, 500); });
+    const query =
+        `SELECT * FROM coupons LIMIT 10 OFFSET ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const total = await client.query(`SELECT count(*) from coupons`);
+            const { rows } = await client.query(query, [offset]);
+
+            if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); });
 };
 
 exports.updateCoupon = (req, res, callback) => {

@@ -10,7 +10,7 @@ router.post('/add',
 router.get('/get/:id',
     execute(control.getCoupon));
 
-router.get('/getall',
+router.get('/getall/:page',
     execute(control.getAllCoupon));
 
 router.delete('/del/:id',

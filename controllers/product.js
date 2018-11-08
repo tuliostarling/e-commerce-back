@@ -36,14 +36,17 @@ exports.getAllPromotions = (req, res, callback) => {
 };
 
 exports.getListMainProduct = (req, res, callback) => {
-    const query = `SELECT * from products`;
+    const offset = req.params.page * 16;
+
+    const query = `SELECT * from products LIMIT 10 OFFSET ($1)`;
 
     (async () => {
         const client = await pool.connect();
 
         try {
-            const { rows } = await client.query(query);
-            if (rows.length > 0) return callback(null, 200, rows);
+            const total = await client.query(`SELECT count(*) from products`);
+            const { rows } = await client.query(query, [offset]);
+            if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
 
         } catch (err) {
             console.log(err);
@@ -86,7 +89,7 @@ exports.getAllSubProduct = (req, res, callback) => {
         try {
             const { rows } = await client.query(query, [id]);
             const imgRows = await client.query(imgQuery, [id]);
-    
+
             // rows.reduce((acc, row) => {
             //     const found = acc.find(r => r.id === row.id);
             //     if (found) {
