@@ -36,7 +36,7 @@ exports.getAllPromotions = (req, res, callback) => {
 };
 
 exports.getListMainProduct = (req, res, callback) => {
-    const offset = req.params.page * 16;
+    const offset = req.params.page * 10;
 
     const query = `SELECT * from products LIMIT 10 OFFSET ($1)`;
 
@@ -60,7 +60,8 @@ exports.getListMainProduct = (req, res, callback) => {
 
 exports.getAllSubProduct = (req, res, callback) => {
     const id = req.params.id;
-    //const offset = req.params.page * 16;
+    const offset = req.params.page * 8;
+    
     const query = `SELECT subproducts.id,
                           subproducts.size,
                           subproducts.amount,
@@ -72,9 +73,9 @@ exports.getAllSubProduct = (req, res, callback) => {
                           subproducts.material,
                           subproducts.id_product
                     FROM subproducts
-                    WHERE id_product = $1
-                    ORDER BY subproducts.id ASC;`;
-    //LIMIT 16 OFFSET ($2)
+                    WHERE id_product = ($1)
+                    ORDER BY subproducts.id ASC LIMIT 8 OFFSET ($2);`;
+    
     const imgQuery = ` select json_agg(json_build_object('url',images.location_aws,'key',images.key_aws,'id',images.id)) as images
                         FROM subproducts, images
                         WHERE id_product = ($1)
@@ -82,13 +83,17 @@ exports.getAllSubProduct = (req, res, callback) => {
                         GROUP BY subproducts.id
                         ORDER BY subproducts.id ASC;`;
 
-
+    const totalQuery = `SELECT count(*) from subproducts where id_product = ($1)`;
+    
     (async () => {
         const client = await pool.connect();
-
+        
         try {
-            const { rows } = await client.query(query, [id]);
+            const total = await client.query(totalQuery, [id]);
+            const { rows } = await client.query(query, [id, offset]);
             const imgRows = await client.query(imgQuery, [id]);
+
+            console.log(total);
 
             // rows.reduce((acc, row) => {
             //     const found = acc.find(r => r.id === row.id);
@@ -102,7 +107,7 @@ exports.getAllSubProduct = (req, res, callback) => {
             //     return acc;
             // }, []);
 
-            if (rows.length >= 0) return callback(null, 200, { rows: rows, images: imgRows.rows });
+            if (rows.length >= 0) return callback(null, 200, { rows: rows, images: imgRows.rows, total: total.rows });
         } catch (err) {
             console.log(err);
             throw err;
