@@ -61,7 +61,7 @@ exports.getListMainProduct = (req, res, callback) => {
 exports.getAllSubProduct = (req, res, callback) => {
     const id = req.params.id;
     const offset = req.params.page * 8;
-    
+
     const query = `SELECT subproducts.id,
                           subproducts.size,
                           subproducts.amount,
@@ -75,7 +75,7 @@ exports.getAllSubProduct = (req, res, callback) => {
                     FROM subproducts
                     WHERE id_product = ($1)
                     ORDER BY subproducts.id ASC LIMIT 8 OFFSET ($2);`;
-    
+
     const imgQuery = ` select json_agg(json_build_object('url',images.location_aws,'key',images.key_aws,'id',images.id)) as images
                         FROM subproducts, images
                         WHERE id_product = ($1)
@@ -84,10 +84,10 @@ exports.getAllSubProduct = (req, res, callback) => {
                         ORDER BY subproducts.id ASC;`;
 
     const totalQuery = `SELECT count(*) from subproducts where id_product = ($1)`;
-    
+
     (async () => {
         const client = await pool.connect();
-        
+
         try {
             const total = await client.query(totalQuery, [id]);
             const { rows } = await client.query(query, [id, offset]);
@@ -136,10 +136,9 @@ exports.getListByCategory = (req, res, callback) => {
         const client = await pool.connect();
 
         try {
-            const total = await client.query(`SELECT count(*) from subproducts`);
             const { rows } = await client.query(query, [id, offset]);
 
-            if (rows.length > 0) return callback(null, 200, { total: total.rows, rows });
+            if (rows.length > 0) return callback(null, 200, { rows });
         } catch (err) {
             console.log(err);
             throw err;
