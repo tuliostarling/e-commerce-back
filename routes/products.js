@@ -42,7 +42,7 @@ router.delete('/del/:id',
 
 // Sub Products Routes.
 
-router.get('/listall/SubProducts/:id',
+router.get('/listall/SubProducts/:id/:page',
     execute(control.getAllSubProduct));
 
 router.post('/addSubProduct/:id',

@@ -34,7 +34,7 @@ exports.getCoupon = (req, res, callback) => {
 };
 
 exports.getAllCoupon = (req, res, callback) => {
-    const offset = req.params.page * 16;
+    const offset = req.params.page * 10;
 
     const query =
         `SELECT * FROM coupons LIMIT 10 OFFSET ($1)`;
