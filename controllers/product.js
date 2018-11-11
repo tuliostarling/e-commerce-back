@@ -132,13 +132,17 @@ exports.getListByCategory = (req, res, callback) => {
         LIMIT 16 OFFSET ($2)
         `;
 
+    const totalQuery = `select count(*) from subproducts, products where subproducts.id_product = products.id
+	                        and products.id_category = ($1)`;
+
     (async () => {
         const client = await pool.connect();
 
         try {
+            const total = await client.query(totalQuery, [id]);
             const { rows } = await client.query(query, [id, offset]);
 
-            if (rows.length > 0) return callback(null, 200, { rows });
+            if (rows.length > 0) return callback(null, 200, { rows, total: total.rows });
         } catch (err) {
             console.log(err);
             throw err;
