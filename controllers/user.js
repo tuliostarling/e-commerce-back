@@ -10,7 +10,6 @@ const pg = require('pg');
 const pool = new pg.Pool(db.conn);
 const TABLE = 'users';
 
-// TTL não está funcionando
 exports.add = (req, res, callback) => {
 
     db.knex('users').where({ email: req.body.email }).then(result => {
@@ -41,7 +40,7 @@ exports.confirmUser = (req, res, callback) => {
     let { hex } = req.params;
     if (!hex) return callback('URL INSERIDA INCORRETA', 400);
 
-    bufferData.findOneAndUpdate({ hashed: { $exists: true } }, { $unset: { createdAt: 1 } }
+    bufferData.findOneAndUpdate({ hashed: hex }, { $unset: { createdAt: 1 } }
         , { multi: false }, (err, user) => {
             if (err)
                 return callback(err, 500);

@@ -9,6 +9,7 @@ const coupon = require('./coupon');
 const cart = require('./cart');
 const wishlist = require('./wishlist');
 const comment = require('./comment');
+const shipping = require('./shipping');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 
@@ -20,6 +21,7 @@ router.use('/coupon', coupon);
 router.use('/cart', cart);
 router.use('/wishlist', wishlist);
 router.use('/comment', comment);
+router.use('/shipping', shipping);
 
 
 router.use('/auth', authentication); // Login
