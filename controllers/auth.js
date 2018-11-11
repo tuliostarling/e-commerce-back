@@ -36,7 +36,8 @@ module.exports = (req, res, next, callback) => {
             req.admin = decoded.admin;
             req.cart = decoded.cart;
             req.wishlist = decoded.wishlist;
-
+            req.cep = decoded.cep;
+            
             return next();
         });
 

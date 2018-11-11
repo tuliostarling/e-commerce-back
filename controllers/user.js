@@ -113,19 +113,20 @@ exports.authLogin = (req, res, callback) => {
 
     db.knex.transaction(async (trx) => {
         try {
+            let cep = null;
+            
             let obj = await trx.select('*').from('users').where(query);
 
             if (obj.length <= 0) return callback('Usuário não existente', 404);
-
             if (hashPass(pass) != obj[0].password) return callback('Senha Incorreta', 401);
-
+            
             let cart = await trx.select('*').from('cart').where({ id_user: obj[0].id });
-
             let wishlist = await trx.select('*').from('wishlist').where({ id_user: obj[0].id });
-
+            
+            if (obj[0].id_cep != null) cep = await trx.select('*').from('cep').where({ id: obj[0].id_cep })
+            
             const hash = obj[0].hashtoken;
-
-            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id }) });
+            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id, cep: cep }) });
 
         } catch (err) {
             return callback(err, 500);
