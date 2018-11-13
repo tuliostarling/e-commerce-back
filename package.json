@@ -20,6 +20,7 @@
     "async": "^2.6.1",
     "aws-sdk": "^2.319.0",
     "body-parser": "^1.18.3",
+    "cep-promise": "^3.0.3",
     "cors": "^2.8.4",
     "crypto": "^1.0.1",
     "express": "^4.16.3",

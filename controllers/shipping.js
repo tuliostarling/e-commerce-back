@@ -1,23 +1,38 @@
 'use strict';
 
-const Correio = require('node-correios');
+const correioShip = require('node-correios');
+const cepAPI = require('cep-promise');
 const shipInfo = require('../secrets/config');
-exports.getShipPrice = (req, res, callback) => {
-    const { cep } = req.body;
-    const correios = new Correio();
-    shipInfo.correioConfig.sCepDestino = cep;
 
-    correios.calcPreco(shipInfo.correioConfig, (err, result) => {
-        console.log(err);
-        console.log(result);
+exports.getShipPrice = (req, res, callback) => {
+    const { cep, value } = req.body;
+    const correios = new correioShip();
+
+    if (cep) shipInfo.correioConfig.sCepDestino = cep;
+    if (value) shipInfo.correioConfig.nVlValorDeclarado = value;
+
+    correios.calcPreco(shipInfo.correioConfig, (err, totalValue) => {
+        if (err) return callback('Erro ao calcular Frete', 500);
+
+        if (Object.keys(totalValue[0].Erro).length === 0 && totalValue[0].Erro.constructor === Object) { //Verify if object returns a error
+
+            cepAPI(cep).then(adress => {
+                if (adress.state === 'MG') {
+                    totalValue.forEach(x => x.Valor = parseFloat(x.Valor.replace(",", ".")) * 60 / 100);
+                    return callback(null, 200, { totalValue, adress });
+                }
+                return callback(null, 200, { totalValue, adress: adress });
+
+            }).catch((err) => { console.log(err); return callback('Erro ao buscar CEP', 500); });
+        }
     });
 
 };
 
 exports.getShipInfo = (req, res, callback) => {
-    
-    //     correios.consultaCEP({ cep: '30140082' }, (err, result) => {
-    //         console.log(result);
-    //     })
+    const { cep } = req.body
+    cepAPI(cep).then(adress => { return callback(null, 200, { adress }); })
+        .catch((err) => { console.log(err); return callback('Erro ao buscar CEP', 500); });
 };
+
 
