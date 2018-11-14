@@ -114,17 +114,17 @@ exports.authLogin = (req, res, callback) => {
     db.knex.transaction(async (trx) => {
         try {
             let cep = null;
-            
+
             let obj = await trx.select('*').from('users').where(query);
 
             if (obj.length <= 0) return callback('Usuário não existente', 404);
             if (hashPass(pass) != obj[0].password) return callback('Senha Incorreta', 401);
-            
+
             let cart = await trx.select('*').from('cart').where({ id_user: obj[0].id });
             let wishlist = await trx.select('*').from('wishlist').where({ id_user: obj[0].id });
-            
+
             if (obj[0].id_cep != null) cep = await trx.select('*').from('cep').where({ id: obj[0].id_cep })
-            
+
             const hash = obj[0].hashtoken;
             return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id, cep: cep }) });
 
@@ -189,28 +189,40 @@ exports.update = (req, res, callback) => {
     const {
         id,
         name,
-        email
+        cep,
+        cpf,
+        street,
+        neighborhood,
+        num,
+        comp
     } = req.body;
     let updateObj = {};
 
     db.knex.transaction(async (trx) => {
         try {
-
             if (name != null && name != undefined) updateObj.name = name;
-            if (email != null && email != undefined) updateObj.email = email;
+            if (cep != null && cep != undefined) updateObj.cep = cep;
+            if (cpf != null && cpf != undefined) updateObj.cpf = cpf;
+            if (street != null && street != undefined) updateObj.street = street;
+            if (neighborhood != null && neighborhood != undefined) updateObj.neighborhood = neighborhood;
+            if (num != null && num != undefined) updateObj.num = num;
+            if (comp != null && comp != undefined) updateObj.comp = comp;
 
             let obj = await trx.select('*').from('users').where({ id: req.body.id });
 
             if (obj.length <= 0) return callback('Usuário não existente', 404);
 
-            let result = await trx.where({ id: id }).update({ name: updateObj.name, email: updateObj.email }).into('users');
+            let result = await trx.where({ id: id }).update({
+                name: updateObj.name, cpf: updateObj.cpf,
+                street: updateObj.street, neighborhood: updateObj.neighborhood, num: updateObj.num,
+                comp: updateObj.comp, cep: updateObj.cep
+            }).into('users');
 
             if (result >= 1) return callback(null, 200, result);
         } catch (err) {
             return callback(err, 500);
         }
     });
-
 };
 
 exports.getOne = (req, res, callback) => {
