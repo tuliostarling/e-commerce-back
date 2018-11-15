@@ -18,7 +18,10 @@ exports.getShipPrice = (req, res, callback) => {
 
             cepAPI(cep).then(adress => {
                 if (adress.state === 'MG') {
-                    totalValue.forEach(x => x.Valor = parseFloat(x.Valor.replace(",", ".")) * 60 / 100);
+                    totalValue.forEach(x => {
+                        let value = parseFloat(x.Valor.replace(",", ".")) * 60 / 100;
+                        x.Valor = Math.round(value * 100) / 100;
+                    });
                     return callback(null, 200, { totalValue, adress });
                 }
                 return callback(null, 200, { totalValue, adress: adress });
@@ -31,7 +34,7 @@ exports.getShipPrice = (req, res, callback) => {
 
 exports.getShipInfo = (req, res, callback) => {
     const { cep } = req.body
-    cepAPI(cep).then(adress => { return callback(null, 200, { adress }); })
+    cepAPI(cep).then(adress => { return callback(null, 200, { adress: adress }); })
         .catch((err) => { console.log(err); return callback('Erro ao buscar CEP', 500); });
 };
 
