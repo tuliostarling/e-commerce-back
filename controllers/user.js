@@ -86,8 +86,8 @@ exports.confirmUser = (req, res, callback) => {
 
 exports.newPass = (req, res, callback) => {
     let query = { email: req.body.email };
-    let oldpass = req.body.oldpassword;
-    let newpassword = req.body.newpassword;
+    let oldpass = req.body.oldpass;
+    let newpassword = req.body.newpass;
 
     newpassword = crypto.createHash('sha512').update(newpassword).digest('hex');
 
@@ -123,10 +123,8 @@ exports.authLogin = (req, res, callback) => {
             let cart = await trx.select('*').from('cart').where({ id_user: obj[0].id });
             let wishlist = await trx.select('*').from('wishlist').where({ id_user: obj[0].id });
 
-            if (obj[0].id_cep != null) cep = await trx.select('*').from('cep').where({ id: obj[0].id_cep })
-
             const hash = obj[0].hashtoken;
-            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id, cep: cep }) });
+            return callback(null, 200, { token: generateToken(hash, { id: obj[0].id, name: obj[0].name, admin: obj[0].admin, cart: cart[0].id, wishlist: wishlist[0].id, cep: obj[0].cep }) });
 
         } catch (err) {
             return callback(err, 500);
@@ -191,6 +189,8 @@ exports.update = (req, res, callback) => {
         name,
         cep,
         cpf,
+        state,
+        city,
         street,
         neighborhood,
         num,
@@ -203,6 +203,8 @@ exports.update = (req, res, callback) => {
             if (name != null && name != undefined) updateObj.name = name;
             if (cep != null && cep != undefined) updateObj.cep = cep;
             if (cpf != null && cpf != undefined) updateObj.cpf = cpf;
+            if (state != null && state != undefined) updateObj.state = state;
+            if (city != null && city != undefined) updateObj.city = city;
             if (street != null && street != undefined) updateObj.street = street;
             if (neighborhood != null && neighborhood != undefined) updateObj.neighborhood = neighborhood;
             if (num != null && num != undefined) updateObj.num = num;
@@ -214,6 +216,7 @@ exports.update = (req, res, callback) => {
 
             let result = await trx.where({ id: id }).update({
                 name: updateObj.name, cpf: updateObj.cpf,
+                state: updateObj.state, city: updateObj.city, 
                 street: updateObj.street, neighborhood: updateObj.neighborhood, num: updateObj.num,
                 comp: updateObj.comp, cep: updateObj.cep
             }).into('users');
