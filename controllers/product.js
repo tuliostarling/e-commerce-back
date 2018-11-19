@@ -92,9 +92,7 @@ exports.getAllSubProduct = (req, res, callback) => {
             const total = await client.query(totalQuery, [id]);
             const { rows } = await client.query(query, [id, offset]);
             const imgRows = await client.query(imgQuery, [id]);
-
-            console.log(total);
-
+            
             // rows.reduce((acc, row) => {
             //     const found = acc.find(r => r.id === row.id);
             //     if (found) {
