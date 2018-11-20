@@ -39,7 +39,7 @@ exports.getItems = (req, res, callback) => {
                 if (totalPrice >= 140) pricesObj.installments3x = totalPrice / 3;
                 if (totalPrice >= 300) pricesObj.installments4x = totalPrice / 4;
 
-                return callback(null, 200, {rows, pricesObj, qtdOptions});
+                return callback(null, 200, { rows, pricesObj, qtdOptions });
             }
         } catch (err) {
             console.log(err);
@@ -70,8 +70,8 @@ exports.addtoCart = (req, res, callback) => {
 
         try {
             const rows = await client.query(query, [id_cart, id_subproduct, qtd]);
-            if (rows.rowCount > 0) return callback(null, 200, rows);
-            return callback('Produto já esta no carrinho', 401);
+            if (rows.rowCount > 0) return callback(null, 200, { sucess: true });
+            return callback('Produto já esta no carrinho', 208);//already exists
         } catch (err) {
             console.log(err);
             throw err;
@@ -86,7 +86,7 @@ exports.addtoCart = (req, res, callback) => {
 exports.increaseAmount = (req, res, callback) => {
     const amount = req.body[0].amount;
     const id_item = req.body[0].id_item;
-
+    
     let query = `
     UPDATE items SET qtd = ($1)
     WHERE items.id = ($2)`;
@@ -96,7 +96,7 @@ exports.increaseAmount = (req, res, callback) => {
 
         try {
             const rows = await client.query(query, [amount, id_item]);
-            if (rows.rowCount > 0) return callback(null, 200);
+            if (rows.rowCount > 0) return callback(null, 200, { sucess: true });
         } catch (err) {
             console.log(err);
             throw err;

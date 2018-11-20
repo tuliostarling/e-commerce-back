@@ -37,7 +37,7 @@ exports.getAllPromotions = (req, res, callback) => {
 
 exports.getListMainProduct = (req, res, callback) => {
     const offset = req.params.page * 10;
-
+    
     const query = `SELECT * from products LIMIT 10 OFFSET ($1)`;
 
     (async () => {
