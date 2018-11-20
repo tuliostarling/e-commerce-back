@@ -24,7 +24,25 @@ exports.getComment = (req, res, callback) => {
     WHERE cp.id_subproduct = ($1)
     AND u.id = cp.id_user`;
 
-    pool.query(query, [idSubproduct]).then((result) => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows);
-    }).catch((err) => { return callback(err, 500); });
+    const totalQuery = `SELECT COUNT(*) FROM product_comment WHERE id_subproduct = ($1)`;
+
+    const avgRating = `SELECT AVG(rating) FROM product_comment where id_subproduct = ($1)`;
+
+    (async () => {
+        const client = await pool.connect();
+
+        try {
+            const total = await client.query(totalQuery, [idSubproduct]);
+            const { rows } = await client.query(query, [idSubproduct]);
+            const avg = await client.query(avgRating, [idSubproduct]);
+            
+            if (rows.length >= 0) return callback(null, 200, { rows: rows, total: total.rows, avgRating: avg.rows });
+        } catch (err) {
+            console.log(err);
+            throw err;
+        } finally {
+            client.release();
+        }
+
+    })().catch(err => { return callback(err, 500); });
 };
