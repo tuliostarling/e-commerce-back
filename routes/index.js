@@ -11,6 +11,7 @@ const wishlist = require('./wishlist');
 const comment = require('./comment');
 const shipping = require('./shipping');
 const payment = require('./payment');
+const home = require('./home');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 
@@ -22,6 +23,7 @@ router.use('/coupon', coupon);
 router.use('/comment', comment);
 router.use('/shipping', shipping);
 router.use('/payment', payment);
+router.use('/home', home);
 
 router.use('/auth', authentication); // Login
 
