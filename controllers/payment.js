@@ -7,37 +7,33 @@ exports.payCart = (req, res, callback) => {
     let cartInfo = req.body;
 
     paypal.configure(config.paySandBox);
+    console.log(cartInfo);
+    
+    //let cartItems = cartInfo.cartItem.map()
 
-    let paymentObj = {
-        "intent": "sale",
-        "payer": {
-            "payment_method": "paypal"
-        },
-        "redirect_urls": {
-            "return_url": "http://return.url",
-            "cancel_url": "http://cancel.url"
-        },
-        "transactions": [{
-            "item_list": {
-                "items": [{
-                    "name": "item",
-                    "sku": "item",
-                    "price": "1.00",
-                    "currency": "USD",
-                    "quantity": 1
-                }]
-            },
-            "amount": {
-                "currency": "USD",
-                "total": "1.00"
-            },
-            "description": "This is the payment description."
-        }]
-    };
+    config.paymentObj.transactions[0].item_list.items;
+    config.paymentObj.transactions[0].amount.total = cartInfo.price;
 
-    paypal.payment.create(paymentObj, (err, payment) => {
-        if (err) console.log(err);
-        else console.log(payment);
-    });
+    // "items": [{
+    //     "name": `${cartInfo.name}`,
+    //     "sku": `${cartInfo.name}`,
+    //     "price": `${cartInfo.skuPrice}`,
+    //     "currency": "BRL",
+    //     "quantity": cartInfo.quantity
+    // }]
+
+    // paypal.payment.create(config.paymentObj, (err, payment) => {
+    //     if (err) return console.log(err.response);
+    //     console.log(payment);
+    //     for (let i = 0; i < payment.links.length; i++) {
+    //         if (payment.links[i].rel === 'approval_url') return callback(null, 200, { redirect: payment.links[i].href })
+    //     }
+
+    // });
+
+};
+
+
+exports.sucessPay = (req, res, callback) => {
 
 };

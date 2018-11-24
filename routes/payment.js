@@ -7,6 +7,8 @@ const { execute } = require('../controllers/index');
 router.post('/payCart',
     execute(control.payCart));
 
+router.post('/sucessPay',
+    execute(control.sucessPay));
 
 
 module.exports = router;

@@ -21,8 +21,8 @@ exports.add = (req, res, callback) => {
             .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                let url = 'www.tutuguerra.com.br/confirm/' + hash + '/';
-
+                //let url = 'http://www.tutuguerra.com.br/confirm/' + hash + '/';
+                let url = 'localhost:3000/api/confirm/' + hash + '/';
                 mail.send({
                     to: email,
                     subject: 'Parabéns pela sua conta na Tutu Guerra',
@@ -113,8 +113,6 @@ exports.authLogin = (req, res, callback) => {
 
     db.knex.transaction(async (trx) => {
         try {
-            let cep = null;
-
             let obj = await trx.select('*').from('users').where(query);
 
             if (obj.length <= 0) return callback('Usuário não existente', 404);
@@ -201,8 +199,8 @@ exports.update = (req, res, callback) => {
     db.knex.transaction(async (trx) => {
         try {
             if (name != null && name != undefined) updateObj.name = name;
-            if (cep != null && cep != undefined) updateObj.cep = cep;
-            if (cpf != null && cpf != undefined) updateObj.cpf = cpf;
+            if (cep != null && cep != undefined) updateObj.cep = cep.replace(".", "").replace("-", "");
+            if (cpf != null && cpf != undefined) updateObj.cpf = cpf.replace(".", "").replace(".", "").replace("-", "");
             if (state != null && state != undefined) updateObj.state = state;
             if (city != null && city != undefined) updateObj.city = city;
             if (street != null && street != undefined) updateObj.street = street;
@@ -213,15 +211,13 @@ exports.update = (req, res, callback) => {
             let obj = await trx.select('*').from('users').where({ id: req.body.id });
 
             if (obj.length <= 0) return callback('Usuário não existente', 404);
-
             let result = await trx.where({ id: id }).update({
                 name: updateObj.name, cpf: updateObj.cpf,
-                state: updateObj.state, city: updateObj.city, 
+                state: updateObj.state, city: updateObj.city,
                 street: updateObj.street, neighborhood: updateObj.neighborhood, num: updateObj.num,
                 comp: updateObj.comp, cep: updateObj.cep
             }).into('users');
-
-            if (result >= 1) return callback(null, 200, result);
+            if (result >= 1) return callback(null, 200, { sucess: true });
         } catch (err) {
             return callback(err, 500);
         }

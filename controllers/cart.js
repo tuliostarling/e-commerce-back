@@ -6,15 +6,14 @@ const pool = new pg.Pool(db.conn);
 
 exports.getItems = (req, res, callback) => {
     const id_cart = req.params.id;
-
     const query = `
     SELECT DISTINCT ON 
-	(subproducts.id) subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, items.id as id_item, images.location_aws
+	(subproducts.id) subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, items.id as id_item_cart, images.location_aws
     FROM items, cart, subproducts, products, images
     WHERE cart.id = ($1) 
 	AND subproducts.id = items.id_subproduct
 	AND subproducts.id = images.id_subproduct
-	ORDER BY subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, id_item, images.location_aws
+	ORDER BY subproducts.id, products.name, subproducts.price, subproducts.size, items.qtd, id_item_cart, images.location_aws
     `;
 
     (async () => {
@@ -30,10 +29,6 @@ exports.getItems = (req, res, callback) => {
                 let pricesObj = {
                     finalValue: totalPrice
                 };
-
-                // let toot = rows.map(x => x.qtd).reduce((curr,next) => {return curr = curr + next - 1}, [])
-                // console.log(toot);
-                // console.log(rows);
 
                 if (totalPrice >= 80) pricesObj.installments2x = totalPrice / 2;
                 if (totalPrice >= 140) pricesObj.installments3x = totalPrice / 3;
@@ -56,7 +51,7 @@ exports.addtoCart = (req, res, callback) => {
     const id_cart = req.body[0].id_cart;
     const id_subproduct = req.body[0].id_subproduct;
     const qtd = req.body[0].amount;
-
+    
     const query = `
     INSERT INTO items(id_cart,id_subproduct,qtd) 
     SELECT ($1),($2),($3)
@@ -85,11 +80,12 @@ exports.addtoCart = (req, res, callback) => {
 
 exports.increaseAmount = (req, res, callback) => {
     const amount = req.body[0].amount;
-    const id_item = req.body[0].id_item;
+    const id_item = req.body[0].id_item_cart;
     
     let query = `
     UPDATE items SET qtd = ($1)
-    WHERE items.id = ($2)`;
+    WHERE items.id = ($2)
+    `;
 
     (async () => {
         const client = await pool.connect();
