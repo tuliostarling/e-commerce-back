@@ -217,7 +217,7 @@ exports.getOneMain = (req, res, callback) => {
             client.release();
         }
 
-    })().catch(err => { return callback(err, null); });
+    })().catch(err => { return callback(err, 500); });
 };
 
 exports.addImages = (req, res, callback) => {

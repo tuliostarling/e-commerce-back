@@ -6,7 +6,7 @@ const Schema = mongoose.Schema;
 
 const PaymentSchema = new Schema({
     id: { type: String, required: true },
-    cartValue: { type: String, required: true, unique: true},
+    cartValue: { type: String, required: true},
     createdAt: { type: Date }
 });
 

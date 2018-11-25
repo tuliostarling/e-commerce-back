@@ -18,10 +18,8 @@ const noauth = require('./noauth')
 router.use('/', noauth);
 router.use('/product', product);
 router.use('/category', category);
-router.use('/coupon', coupon);
 router.use('/comment', comment);
 router.use('/shipping', shipping);
-router.use('/payment', payment);
 
 router.use('/auth', authentication); // Login
 
@@ -31,6 +29,8 @@ router.use(auth);//MiddleWare Validando Token antes do usuario seguir.
 router.use('/user', user);// criação de conta.
 router.use('/cart', cart);
 router.use('/wishlist', wishlist);
+router.use('/payment', payment);
+router.use('/coupon', coupon);
 
 
 module.exports = router;
