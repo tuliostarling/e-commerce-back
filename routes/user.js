@@ -20,4 +20,10 @@ router.put('/put',
 router.get('/listone/:id',
     execute(control.getOne));
 
+router.post('/purchases',
+    execute(control.getPurchases));
+
+router.get('/getPurchase/:id',
+    execute(control.getOnePurchase))
+
 module.exports = router;

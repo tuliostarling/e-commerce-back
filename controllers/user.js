@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken');
 const db = require('../secrets/config');
 const pg = require('pg');
 const pool = new pg.Pool(db.conn);
+
+const DB = require('../wrappers/db');
+const POOL = DB.getPool();
 const TABLE = 'users';
 
 exports.add = (req, res, callback) => {
@@ -232,6 +235,38 @@ exports.getOne = (req, res, callback) => {
             return callback(null, 200, result);
     }).catch((err) => { return callback(err, 500); });
 };
+
+exports.getPurchases = (req, res, callback) => {
+    const idUser = req.body.id_user;
+
+    const query = `
+        SELECT id, status, created_at
+        FROM purchases WHERE id_user = ($1);
+        `;
+
+    POOL.query(query, [idUser]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows);
+    }).catch(err => { return callback(err, 500); })
+
+};
+
+exports.getOnePurchase = (req, res, callback) => {
+    const idPurchase = req.params.id;
+
+    const query = `
+        SELECT p.id, p.adress, p.status, p.created_at,
+        p.sale, ip.name, ip.price , ip.quantity, ip.currency
+        FROM item_purchases ip, purchases p
+        WHERE ip.id_purchase = ($1)
+        AND p.id = ip.id_purchase
+        `;
+
+    POOL.query(query, [idPurchase]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows);
+    }).catch(err => { return callback(err, 500); })
+
+};
+
 
 
 function hashPass(pass) {

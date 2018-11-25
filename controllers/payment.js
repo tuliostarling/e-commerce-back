@@ -62,7 +62,7 @@ exports.sucessPay = (req, res, callback) => {
     const paymentId = req.body.payment.paymentId;
     const idUser = req.body.user;
     const idCart = req.body.cart;
-
+    
     paymentData.findOneAndUpdate({ id: req.body.user },
         { multi: false }, (err, data) => {
             if (err) return callback(err, 500);
