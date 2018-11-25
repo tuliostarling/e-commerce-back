@@ -11,6 +11,7 @@ const wishlist = require('./wishlist');
 const comment = require('./comment');
 const shipping = require('./shipping');
 const payment = require('./payment');
+const home = require('./home');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 
@@ -20,7 +21,6 @@ router.use('/product', product);
 router.use('/category', category);
 router.use('/comment', comment);
 router.use('/shipping', shipping);
-
 router.use('/auth', authentication); // Login
 
 // Rotas Autenticadas
@@ -31,6 +31,7 @@ router.use('/cart', cart);
 router.use('/wishlist', wishlist);
 router.use('/payment', payment);
 router.use('/coupon', coupon);
+router.use('/home', home);
 
 
 module.exports = router;
