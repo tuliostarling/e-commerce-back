@@ -251,10 +251,10 @@ exports.getPurchases = (req, res, callback) => {
 };
 
 exports.getOnePurchase = (req, res, callback) => {
-    const idPurchase = req.params.id;
+    const idPurchase = req.body.id;
 
     const query = `
-        SELECT p.id, p.adress, p.status, p.created_at,
+        SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
         p.sale, ip.name, ip.price , ip.quantity, ip.currency
         FROM item_purchases ip, purchases p
         WHERE ip.id_purchase = ($1)
@@ -264,7 +264,6 @@ exports.getOnePurchase = (req, res, callback) => {
     POOL.query(query, [idPurchase]).then(result => {
         if (result.rows.length > 0) return callback(null, 200, result.rows);
     }).catch(err => { return callback(err, 500); })
-
 };
 
 

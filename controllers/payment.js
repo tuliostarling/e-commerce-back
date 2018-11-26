@@ -62,7 +62,7 @@ exports.sucessPay = (req, res, callback) => {
     const paymentId = req.body.payment.paymentId;
     const idUser = req.body.user;
     const idCart = req.body.cart;
-    
+
     paymentData.findOneAndUpdate({ id: req.body.user },
         { multi: false }, (err, data) => {
             if (err) return callback(err, 500);
@@ -94,6 +94,9 @@ exports.sucessPay = (req, res, callback) => {
                     const client = await pool.connect();
 
                     try {
+                        delete result["links"];
+                        delete result.transactions[0].related_resources[0].sale["links"]
+
                         const { rows } = await client.query(insertQuery, [idUser,
                             result.payer.payer_info.shipping_address,
                             result.transactions[0].related_resources[0].sale,
@@ -117,7 +120,6 @@ exports.sucessPay = (req, res, callback) => {
                     } finally {
                         client.release();
                     }
-
                 })().catch(err => { return callback(err, 500); });
             });
         });

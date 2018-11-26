@@ -14,6 +14,7 @@ const payment = require('./payment');
 const home = require('./home');
 const authentication = require('./auth');
 const noauth = require('./noauth')
+const dashboard = require('./dashboard');
 
 // Cria routes que não requerem autenticação
 router.use('/', noauth);
@@ -32,6 +33,7 @@ router.use('/wishlist', wishlist);
 router.use('/payment', payment);
 router.use('/coupon', coupon);
 router.use('/home', home);
+router.use('/dashboard', dashboard);
 
 
 module.exports = router;
