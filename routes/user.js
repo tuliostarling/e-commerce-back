@@ -23,7 +23,7 @@ router.get('/listone/:id',
 router.post('/purchases',
     execute(control.getPurchases));
 
-router.get('/getPurchase/:id',
+router.post('/getPurchase',
     execute(control.getOnePurchase))
 
 module.exports = router;

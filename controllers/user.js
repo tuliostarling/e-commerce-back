@@ -262,7 +262,7 @@ exports.getOnePurchase = (req, res, callback) => {
         `;
 
     POOL.query(query, [idPurchase]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows);
+        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
     }).catch(err => { return callback(err, 500); })
 };
 

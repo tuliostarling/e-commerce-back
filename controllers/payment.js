@@ -100,7 +100,7 @@ exports.sucessPay = (req, res, callback) => {
                         const { rows } = await client.query(insertQuery, [idUser,
                             result.payer.payer_info.shipping_address,
                             result.transactions[0].related_resources[0].sale,
-                            result.transactions[0].related_resources[0].sale.transaction_fee.value, 'Aguardando', false]);
+                            result.transactions[0].related_resources[0].sale.transaction_fee.value, 'Aguardando', null]);
 
                         for (let i = 0; i < arr.length; i++) {
                             await client.query(insertQueryItem,
@@ -112,7 +112,7 @@ exports.sucessPay = (req, res, callback) => {
 
                         if (cleanCart.rowCount > 0) {
                             data.remove();
-                            return callback(null, 200, result)
+                            return callback(null, 200, { id: rows[0].purchase_id })
                         }
                     } catch (err) {
                         console.log(err);
