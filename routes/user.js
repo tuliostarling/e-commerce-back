@@ -14,6 +14,12 @@ router.post('/add',
 router.post('/addCoupon',
     execute(control.insertCoupon));
 
+router.post('/verifyCoupon',
+    execute(control.verifyCoupon));
+
+router.get('/getUserCoupon/:id',
+    execute(control.getUserCoupon));
+
 router.put('/put',
     execute(control.update));
 

@@ -184,6 +184,39 @@ exports.insertCoupon = (req, res, callback) => {
 
 };
 
+exports.verifyCoupon = (req, res, callback) => {
+    const couponName = req.body.name;
+
+    const query = `
+        SELECT * from coupons c , user_coupons uc
+        WHERE c.name like 'teste'
+        AND c.valid = true
+        AND uc.used = false
+        AND uc.id_coupon = c.id
+    `;
+
+    POOL.query(query, [couponName]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+    }).catch((err) => { return callback(err, 500); });
+
+};
+
+exports.getUserCoupon = (req, res, callback) => {
+    const userId = req.params.id;
+
+    const query = `            
+        SELECT * FROM user_coupons uc, coupons c
+        WHERE uc.id_user = ($1)
+        AND c.id = uc.id_coupon
+        AND uc.used = false 
+        AND c.valid = true
+        `;
+
+    POOL.query(query, [userId]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+    }).catch((err) => { return callback(err, 500); });
+};
+
 exports.update = (req, res, callback) => {
     const {
         id,
@@ -265,8 +298,6 @@ exports.getOnePurchase = (req, res, callback) => {
         if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
     }).catch(err => { return callback(err, 500); })
 };
-
-
 
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');

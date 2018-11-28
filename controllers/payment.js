@@ -16,7 +16,6 @@ exports.payCart = (req, res, callback) => {
     let cartItems = [];
 
     cartInfo.cartItem.forEach(element => {
-
         element['sku'] = element.name
         element['currency'] = "BRL";
         element['quantity'] = element.qtd;
@@ -41,12 +40,19 @@ exports.payCart = (req, res, callback) => {
     config.paymentObj.transactions[0].amount.details.shipping = cartInfo.shipping.toString();
     config.paymentObj.transactions[0].amount.total = cartInfo.price.toString();
 
+    if (req.body.discount != null) {
+        config.discountObj.name = cartInfo.discount.name
+        config.discountObj.description = cartInfo.discount.value
+        config.discountObj.price = cartInfo.discount.price
+        config.paymentObj.transactions[0].item_list.items.push(config.discountObj)
+    }
+
 
     paypal.payment.create(config.paymentObj, (err, payment) => {
         if (err) return console.log(err.response);
         for (let i = 0; i < payment.links.length; i++) {
             if (payment.links[i].rel === 'approval_url') {
-                new paymentData({ id: id, cartValue: cartInfo.price.toString() })
+                new paymentData({ id: id, cartValue: cartInfo.price.toString(), userCouponId: cartInfo.discount.id })
                     .save((err, obj) => {
                         if (err) return callback(err, 500);
                         return callback(null, 200, { redirect: payment.links[i].href })
@@ -68,6 +74,7 @@ exports.sucessPay = (req, res, callback) => {
             if (err) return callback(err, 500);
 
             const cartValue = data.cartValue;
+            const couponId = data.userCouponId;
             config.executePaymentObj.payer_id = payerID;
             config.executePaymentObj.transactions[0].amount.total = cartValue;
 
@@ -82,9 +89,8 @@ exports.sucessPay = (req, res, callback) => {
                 VALUES ($1, $2, $3, $4, $5);
                 `;
 
-            const deleteQueryCart = `
-                DELETE FROM items where id_cart = ($1);
-                `;
+            const deleteQueryCart = `DELETE FROM items where id_cart = ($1);`;
+            const updateUserQueryCoupon = `UPDATE user_coupons SET used = true WHERE id = ($1)`;
 
             paypal.payment.execute(paymentId, config.executePaymentObj, (err, result) => {
                 if (err) return console.log(err.response.details);
@@ -109,6 +115,7 @@ exports.sucessPay = (req, res, callback) => {
 
                         }
                         const cleanCart = await client.query(deleteQueryCart, [idCart]);
+                        if (couponId != null) await client.query(updateUserQueryCoupon, [couponId]);
 
                         if (cleanCart.rowCount > 0) {
                             data.remove();
