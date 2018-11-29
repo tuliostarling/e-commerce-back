@@ -47,12 +47,18 @@ exports.payCart = (req, res, callback) => {
         config.paymentObj.transactions[0].item_list.items.push(config.discountObj)
     }
 
+    let mongoAuxObj = {
+        id: id,
+        cartValue: cartInfo.price.toString()
+    }
+
+    if (cartInfo.discount != null) mongoAuxObj.userCouponId = cartInfo.discount.id;
 
     paypal.payment.create(config.paymentObj, (err, payment) => {
         if (err) return console.log(err.response);
         for (let i = 0; i < payment.links.length; i++) {
             if (payment.links[i].rel === 'approval_url') {
-                new paymentData({ id: id, cartValue: cartInfo.price.toString(), userCouponId: cartInfo.discount.id })
+                new paymentData(mongoAuxObj)
                     .save((err, obj) => {
                         if (err) return callback(err, 500);
                         return callback(null, 200, { redirect: payment.links[i].href })
@@ -119,7 +125,8 @@ exports.sucessPay = (req, res, callback) => {
 
                         if (cleanCart.rowCount > 0) {
                             data.remove();
-                            return callback(null, 200, { id: rows[0].purchase_id })
+                            let hashId = result.transactions[0].related_resources[0].sale.id;
+                            return callback(null, 200, { id: hashId })
                         }
                     } catch (err) {
                         console.log(err);

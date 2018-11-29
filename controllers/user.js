@@ -290,7 +290,7 @@ exports.getOnePurchase = (req, res, callback) => {
         SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
         p.sale, ip.name, ip.price , ip.quantity, ip.currency
         FROM item_purchases ip, purchases p
-        WHERE ip.id_purchase = ($1)
+        WHERE sale ->> 'id' = ($1)
         AND p.id = ip.id_purchase
         `;
 
