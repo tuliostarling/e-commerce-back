@@ -199,7 +199,7 @@ exports.verifyCoupon = (req, res, callback) => {
     POOL.query(query, [couponName]).then(result => {
         if (result) {
             const { rows } = result;
-            if (rows.length > 0) return callback(null, 200, rows); 
+            if (rows.length > 0) return callback(null, 200, rows);
         }
     }).catch((err) => { return callback(err, 500); });
 
@@ -300,7 +300,10 @@ exports.getOnePurchase = (req, res, callback) => {
         `;
 
     POOL.query(query, [idPurchase]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+        if (result) {
+            const { rows } = result;
+            if (rows.length > 0) return callback(null, 200, rows);
+        }
     }).catch(err => { return callback(err, 500); })
 };
 
