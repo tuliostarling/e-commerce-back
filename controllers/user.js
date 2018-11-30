@@ -185,18 +185,22 @@ exports.insertCoupon = (req, res, callback) => {
 };
 
 exports.verifyCoupon = (req, res, callback) => {
-    const couponName = req.body.name;
+    const couponName = req.body.coupon;
 
     const query = `
-        SELECT * from coupons c , user_coupons uc
-        WHERE c.name like 'teste'
+        SELECT * FROM coupons c , user_coupons uc
+        WHERE c.name LIKE ($1)
         AND c.valid = true
         AND uc.used = false
-        AND uc.id_coupon = c.id
+        AND c.expire_at > CURRENT_DATE
+        AND uc.id_coupon NOT IN (c.id)
     `;
 
     POOL.query(query, [couponName]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+        if (result) {
+            const { rows } = result;
+            if (rows.length > 0) return callback(null, 200, rows);
+        }
     }).catch((err) => { return callback(err, 500); });
 
 };
@@ -210,10 +214,11 @@ exports.getUserCoupon = (req, res, callback) => {
         AND c.id = uc.id_coupon
         AND uc.used = false 
         AND c.valid = true
-        `;
+        AND c.expire_at > CURRENT_DATE
+    `;
 
     POOL.query(query, [userId]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+        if (result.rows.length > 0) return callback(null, 200, result.rows);
     }).catch((err) => { return callback(err, 500); });
 };
 
@@ -295,7 +300,10 @@ exports.getOnePurchase = (req, res, callback) => {
         `;
 
     POOL.query(query, [idPurchase]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+        if (result) {
+            const { rows } = result;
+            if (rows.length > 0) return callback(null, 200, rows);
+        }
         else return callback('No coupons', 404);
     }).catch(err => { return callback(err, 500); })
 };
