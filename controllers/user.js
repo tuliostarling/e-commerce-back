@@ -296,6 +296,7 @@ exports.getOnePurchase = (req, res, callback) => {
 
     POOL.query(query, [idPurchase]).then(result => {
         if (result.rows.length > 0) return callback(null, 200, result.rows[0]);
+        else return callback('No coupons', 404);
     }).catch(err => { return callback(err, 500); })
 };
 

@@ -36,6 +36,7 @@ exports.getItems = (req, res, callback) => {
 
                 return callback(null, 200, { rows, pricesObj, qtdOptions });
             }
+            return callback('Carrinho Vazio', 404);
         } catch (err) {
             console.log(err);
             throw err;
@@ -51,7 +52,7 @@ exports.addtoCart = (req, res, callback) => {
     const id_cart = req.body[0].id_cart;
     const id_subproduct = req.body[0].id_subproduct;
     const qtd = req.body[0].amount;
-    
+
     const query = `
     INSERT INTO items(id_cart,id_subproduct,qtd) 
     SELECT ($1),($2),($3)
@@ -81,7 +82,7 @@ exports.addtoCart = (req, res, callback) => {
 exports.increaseAmount = (req, res, callback) => {
     const amount = req.body[0].amount;
     const id_item = req.body[0].id_item_cart;
-    
+
     let query = `
     UPDATE items SET qtd = ($1)
     WHERE items.id = ($2)
