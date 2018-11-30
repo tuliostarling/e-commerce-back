@@ -123,11 +123,14 @@ exports.sucessPay = (req, res, callback) => {
                         const cleanCart = await client.query(deleteQueryCart, [idCart]);
                         if (couponId != null) await client.query(updateUserQueryCoupon, [couponId]);
 
+                        data.remove();
                         if (cleanCart.rowCount > 0) {
-                            data.remove();
-                            let hashId = result.transactions[0].related_resources[0].sale.id;
-                            return callback(null, 200, { id: hashId })
+                            let hashId = {
+                                id: result.transactions[0].related_resources[0].sale.id
+                            };
+                            return callback(null, 200, hashId)
                         }
+                        return callback('Erro ao finalizar compra', 404);
                     } catch (err) {
                         console.log(err);
                         throw err;

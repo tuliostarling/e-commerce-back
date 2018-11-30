@@ -289,8 +289,7 @@ exports.getPurchases = (req, res, callback) => {
 };
 
 exports.getOnePurchase = (req, res, callback) => {
-    const idPurchase = req.body.id;
-
+    const idPurchase = req.params.id;
     const query = `
         SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
         p.sale, ip.name, ip.price , ip.quantity, ip.currency
