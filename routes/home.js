@@ -8,14 +8,14 @@ const multer = require('multer');
 let storage = multer.memoryStorage()
 let upload = multer({ storage: storage });
 
-router.get('/getHomeTypes/',
-    execute(control.getHomeTypes));
+router.get('/getHomeProducts/',
+    execute(control.getHomeProducts));
+
+router.get('/getHomeImages/',
+    execute(control.getHomeImages));
 
 router.get('/getAllSubProducts/',
     execute(control.getAllSubProducts));
-
-router.post('/add/',
-    execute(control.insertCarouselImage));
 
 router.post('/addImages/',
     upload.array('file', 3),
