@@ -188,12 +188,10 @@ exports.verifyCoupon = (req, res, callback) => {
     const couponName = req.body.coupon;
 
     const query = `
-        SELECT * FROM coupons c , user_coupons uc
+        SELECT * FROM coupons c
         WHERE c.name LIKE ($1)
         AND c.valid = true
-        AND uc.used = false
         AND c.expire_at > CURRENT_DATE
-        AND uc.id_coupon NOT IN (c.id)
     `;
 
     POOL.query(query, [couponName]).then(result => {
