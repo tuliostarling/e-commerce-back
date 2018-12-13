@@ -3,8 +3,6 @@
 const paypal = require('paypal-rest-sdk');
 const config = require('../secrets/config');
 const paymentData = require('../models/payment');
-const DB = require('../wrappers/db');
-const POOL = DB.getPool();
 const pg = require('pg');
 const pool = new pg.Pool(config.conn);
 
@@ -141,6 +139,3 @@ exports.sucessPay = (req, res, callback) => {
             });
         });
 };
-
-
-
