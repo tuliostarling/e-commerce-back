@@ -273,7 +273,7 @@ exports.getOne = (req, res, callback) => {
 };
 
 exports.getPurchases = (req, res, callback) => {
-    const idUser = req.body.id_user;
+    const idUser = req.params.id;
 
     const query = `
         SELECT id, status, created_at
@@ -281,20 +281,39 @@ exports.getPurchases = (req, res, callback) => {
         `;
 
     POOL.query(query, [idUser]).then(result => {
-        if (result.rows.length > 0) return callback(null, 200, result.rows);
+        if (result) {
+            const { rows } = result;
+            if (rows.length > 0) return callback(null, 200, rows);
+        }
     }).catch(err => { return callback(err, 500); })
 
 };
 
 exports.getOnePurchase = (req, res, callback) => {
-    const idPurchase = req.params.id;
-    const query = `
+    let idPurchase = req.params.id;
+    let query;
+
+    if (idPurchase.match(/[a-z]/i)) {
+        query = `
         SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
-        p.sale, ip.name, ip.price , ip.quantity, ip.currency
-        FROM item_purchases ip, purchases p
+        p.sale, ip.name, ip.price , ip.quantity, ip.currency, u.email, u.name
+        FROM item_purchases ip, purchases p, users u
         WHERE sale ->> 'id' = ($1)
         AND p.id = ip.id_purchase
+        AND u.id = p.id_user
         `;
+    } else {
+        idPurchase = parseInt(idPurchase, 10);
+
+        query = `
+        SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
+        p.sale, ip.name, ip.price , ip.quantity, ip.currency, u.email, u.name
+        FROM item_purchases ip, purchases p, users u
+        WHERE p.id = ($1)
+        AND p.id = ip.id_purchase
+        AND u.id = p.id_user
+        `;
+    }
 
     POOL.query(query, [idPurchase]).then(result => {
         if (result) {

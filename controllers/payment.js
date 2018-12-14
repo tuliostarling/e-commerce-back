@@ -42,8 +42,8 @@ exports.payCart = (req, res, callback) => {
 
     if (req.body.discount != null) {
         config.discountObj.name = cartInfo.discount.name
-        config.discountObj.description = cartInfo.discount.value
-        config.discountObj.price = cartInfo.discount.price
+        config.discountObj.description = cartInfo.discount.name
+        config.discountObj.price = cartInfo.discount.value
         config.paymentObj.transactions[0].item_list.items.push(config.discountObj)
     }
 

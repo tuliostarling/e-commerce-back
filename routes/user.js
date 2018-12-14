@@ -26,7 +26,7 @@ router.put('/put',
 router.get('/listone/:id',
     execute(control.getOne));
 
-router.post('/purchases',
+router.get('/purchases/:id',
     execute(control.getPurchases));
 
 router.get('/getPurchase/:id',
