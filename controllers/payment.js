@@ -39,6 +39,7 @@ exports.payCart = (req, res, callback) => {
     config.paymentObj.transactions[0].amount.total = cartInfo.price.toString();
 
     if (req.body.discount != null) {
+        config.paymentObj.transactions[0].amount.details.subtotal = (cartInfo.subTotal + cartInfo.discount.value).toString();
         config.discountObj.name = cartInfo.discount.name
         config.discountObj.description = cartInfo.discount.name
         config.discountObj.price = cartInfo.discount.value
