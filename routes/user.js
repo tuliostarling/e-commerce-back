@@ -23,6 +23,9 @@ router.get('/getUserCoupon/:id',
 router.put('/put',
     execute(control.update));
 
+router.put('/putAddress',
+    execute(control.updateAddress))
+
 router.get('/listone/:id',
     execute(control.getOne));
 

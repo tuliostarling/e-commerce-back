@@ -263,6 +263,44 @@ exports.update = (req, res, callback) => {
     });
 };
 
+exports.updateAddress = (req, res, callback) => {
+    const {
+        id,
+        cep,
+        state,
+        city,
+        street,
+        neighborhood,
+        num,
+        comp
+    } = req.body;
+    let updateObj = {};
+
+    db.knex.transaction(async (trx) => {
+        try {
+            if (cep != null && cep != undefined) updateObj.cep = cep.replace(".", "").replace("-", "");
+            if (state != null && state != undefined) updateObj.state = state;
+            if (city != null && city != undefined) updateObj.city = city;
+            if (street != null && street != undefined) updateObj.street = street;
+            if (neighborhood != null && neighborhood != undefined) updateObj.neighborhood = neighborhood;
+            if (num != null && num != undefined) updateObj.num = num;
+            if (comp != null && comp != undefined) updateObj.comp = comp;
+
+            let obj = await trx.select('*').from('users').where({ id: req.body.id });
+
+            if (obj.length <= 0) return callback('Usuário não existente', 404);
+            let result = await trx.where({ id: id }).update({
+                state: updateObj.state, city: updateObj.city,
+                street: updateObj.street, neighborhood: updateObj.neighborhood, num: updateObj.num,
+                comp: updateObj.comp, cep: updateObj.cep
+            }).into('users');
+            if (result >= 1) return callback(null, 200, { sucess: true });
+        } catch (err) {
+            return callback(err, 500);
+        }
+    });
+};
+
 exports.getOne = (req, res, callback) => {
     let id = { id: req.params.id };
 
