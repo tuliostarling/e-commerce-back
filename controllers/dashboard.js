@@ -36,7 +36,8 @@ exports.getTotalSoldByDate = (req, res, callback) => {
     const queryQuantity = `
     SELECT name, SUM(quantity) 
     FROM item_purchases
-    GROUP BY name
+    WHERE created_at BETWEEN ($1) 
+    AND ($2) GROUP BY name
     `;
 };
 
@@ -44,6 +45,7 @@ exports.getTotalSoldByDate = (req, res, callback) => {
 exports.sendCode = (req, res, callback) => {
     const idUser = req.body.id_user;
     const idPurchase = req.body.id_purchase;
+    const deliveryStatus = req.body.delivery_status;
     const trackCode = req.body.trackCode;
 
     const queryUser = `
@@ -52,10 +54,10 @@ exports.sendCode = (req, res, callback) => {
         WHERE id = ($1);`;
 
     const queryPurchase = `
-        UPDATE users
-        SET tracking_code = ($1)
-        status = 'Enviado'
-        WHERE id = ($2);`;
+        UPDATE purchases
+        SET tracking_code = ($1),
+        status = ($2)
+        WHERE id = ($3);`;
 
 
     POOL.query(queryUser, [idUser]).then((result) => {
@@ -66,7 +68,7 @@ exports.sendCode = (req, res, callback) => {
         }, (err) => {
             if (err) return callback(err, 500);
 
-            POOL.query(queryPurchase, [trackCode, idPurchase]).then(result => {
+            POOL.query(queryPurchase, [trackCode, deliveryStatus, idPurchase]).then(result => {
                 if (result.rowCount > 1) return callback(null, 200, { success: true });
             });
         });
