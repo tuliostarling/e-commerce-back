@@ -42,6 +42,18 @@ exports.getHomeImages = (req, res, callback) => {
     }).catch((err) => { return callback(err, 500); });
 };
 
+exports.addHomeProducts = (req, res, callback) => {
+    const { id, id_subproduct } = req.body;
+    let query = `INSERT INTO home_products(id, id_subproduct) VALUES (($1),($2)`
+
+    POOL.query(query, [id, id_subproduct]).then(result => {
+        if (result) {
+            if (result.rowCount > 0) return callback(null, 200, { sucess: true });
+        }
+    }).catch((err) => { return callback(err, 500) });
+
+};
+
 exports.addImages = (req, res, callback) => {
     const images = req.files;
 
@@ -70,8 +82,7 @@ exports.addImages = (req, res, callback) => {
 exports.putImages = (req, res, callback) => {
     const files = req.files;
     const { key, id } = req.body;
-    console.log(files)
-    console.log(req.body);
+
     const putQuery = `UPDATE home_images 
     SET location_aws = ($1), key_aws = ($2)
     where id = ($3)`;
@@ -190,4 +201,6 @@ function s3BucketRemove(key) {
             })
         });
 }
+
+
 
