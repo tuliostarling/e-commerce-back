@@ -363,12 +363,12 @@ exports.getOnePurchase = (req, res, callback) => {
 };
 
 exports.contactUs = (req, res, callback) => {
-    const { email, message } = req.body;
+    const { name, email, message } = req.body;
 
     mail.send({
-        to: `tutuguerra@hotmail.com`,
-        subject: `Email de ${email}`,
-        html: `${message}`
+        to: `tuliostarling@hotmail.com`,
+        subject: `Mensagem de usuário`,
+        html: `<p><b>Nome:</b> ${name}.</p> <p><b>Email:</b> ${email}</p> <p><b>Mensagem:</b> ${message}</p>`
     }, (err) => {
         if (err) return callback(err, 500);
         return callback(null, 200, { success: true });
