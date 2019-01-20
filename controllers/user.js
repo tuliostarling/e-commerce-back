@@ -362,6 +362,21 @@ exports.getOnePurchase = (req, res, callback) => {
     }).catch(err => { return callback(err, 500); })
 };
 
+exports.contactUs = (req, res, callback) => {
+    const { email, message } = req.body;
+
+    mail.send({
+        to: `tutuguerra@hotmail.com`,
+        subject: `Email de ${email}`,
+        html: `${message}`
+    }, (err) => {
+        if (err) return callback(err, 500);
+        return callback(null, 200, { success: true });
+    });
+
+};
+
+
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');
 }

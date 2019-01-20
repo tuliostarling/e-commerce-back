@@ -8,6 +8,9 @@ const { execute } = require('../controllers');
 router.get('/confirm/:hex',
     execute(control.confirmUser));
 
+router.post('/contactUs',
+    execute(control.contactUs));
+
 router.post('/add',
     execute(control.add));
 
