@@ -333,7 +333,7 @@ exports.getOnePurchase = (req, res, callback) => {
 
     if (idPurchase.match(/[a-z]/i)) {
         query = `
-        SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
+        SELECT p.id, p.id_user, p.adress, p.status, p.tracking_code, p.created_at,
         p.sale, ip.name, ip.price , ip.quantity, ip.currency, u.email, u.name
         FROM item_purchases ip, purchases p, users u
         WHERE sale ->> 'id' = ($1)
@@ -344,7 +344,7 @@ exports.getOnePurchase = (req, res, callback) => {
         idPurchase = parseInt(idPurchase, 10);
 
         query = `
-        SELECT p.id, p.id_user, p.adress, p.status, p.created_at,
+        SELECT p.id, p.id_user, p.adress, p.status, p.tracking_code, p.created_at,
         p.sale, ip.name, ip.price , ip.quantity, ip.currency, u.email, u.name
         FROM item_purchases ip, purchases p, users u
         WHERE p.id = ($1)

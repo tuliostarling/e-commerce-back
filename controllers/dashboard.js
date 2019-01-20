@@ -4,8 +4,6 @@ const DB = require('../wrappers/db');
 const POOL = DB.getPool();
 const mail = require('../wrappers/mail');
 
-
-
 exports.getPurchases = (req, res, callback) => {
     const page = req.params.page;
 
@@ -19,37 +17,58 @@ exports.getPurchases = (req, res, callback) => {
     }).catch(err => { return callback(err, 500); })
 };
 
-exports.getTotalSoldByDate = (req, res, callback) => {
+exports.getFee = (req, res, callback) => {
+    const dateInitial = req.body.initialDate;
+    const datedateEnd = req.body.finalDate;
 
-    //     -- dashboard info querys
     const queryFee = `
-    SELECT SUM(transaction_fee) FROM purchases 
-    WHERE created_at BETWEEN ($1) 
-    AND ($2)`;
+        SELECT SUM(transaction_fee) FROM purchases 
+        WHERE created_at BETWEEN ($1) 
+        AND ($2)`;
 
+    POOL.query(queryFee, [dateInitial, datedateEnd]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows);
+    }).catch(err => { return callback(err, 500); })
+};
+
+exports.getTotalProfit = (req, res, callback) => {
+    const date = req.body.date;
 
     const queryTotal = `
     SELECT SUM((sale -> 'amount' ->> 'total')::numeric) 
-    FROM purchases WHERE created_at < $(1)
+    FROM purchases WHERE created_at < ($1)
     `;
 
+    POOL.query(queryTotal, [date]).then(result => {
+        if (result.rows.length > 0) return callback(null, 200, result.rows);
+    }).catch(err => { return callback(err, 500); })
+};
+
+exports.getTotalSoldByDate = (req, res, callback) => {
+    const dateInitial = req.body.initialDate;
+    const datedateEnd = req.body.finalDate;
+
     const queryQuantity = `
-    SELECT name, SUM(quantity) 
-    FROM item_purchases
-    WHERE created_at BETWEEN ($1) 
-    AND ($2) GROUP BY name
+        SELECT name, SUM(quantity) 
+        FROM item_purchases
+        WHERE created_at BETWEEN ($1) 
+        AND ($2) GROUP BY name
     `;
+
+    POOL.query(queryQuantity, [dateInitial, datedateEnd]).then(result => {
+        if (result.rows.length >= 0) return callback(null, 200, result.rows);
+    }).catch(err => { return callback(err, 500); })
 };
 
 
 exports.sendCode = (req, res, callback) => {
     const idUser = req.body.id_user;
     const idPurchase = req.body.id_purchase;
-    const deliveryStatus = req.body.delivery_status;
-    const trackCode = req.body.trackCode;
-
+    const deliveryStatus = req.body.status;
+    const trackCode = req.body.tracking_code;
+    
     const queryUser = `
-        SELECT email 
+        SELECT * 
         FROM users 
         WHERE id = ($1);`;
 
@@ -62,9 +81,9 @@ exports.sendCode = (req, res, callback) => {
 
     POOL.query(queryUser, [idUser]).then((result) => {
         mail.send({
-            to: result.email,
+            to: result.rows[0].email,
             subject: 'Código de Rastramento do seu Produto!',
-            html: `Olá ${result.email}, Segue o código de rastreio do correio para acompanhar a entrega do seu Produto!`
+            html: `Olá ${result.rows[0].name}, Segue o código de rastreio (${trackCode}) do correio para acompanhar a entrega do seu produto!`
         }, (err) => {
             if (err) return callback(err, 500);
 
@@ -73,5 +92,4 @@ exports.sendCode = (req, res, callback) => {
             });
         });
     }).catch((err) => { return callback(err, 500); });
-
 };

@@ -7,6 +7,15 @@ const { execute } = require('../controllers/index');
 router.get('/getsellout/:page',
     execute(control.getPurchases));
 
+router.post('/getfee',
+    execute(control.getFee));
+
+router.post('/getTotalProfit',
+    execute(control.getTotalProfit));
+
+router.post('/getTotalSold',
+    execute(control.getTotalSoldByDate));
+
 router.post('/sendUserCode',
     execute(control.sendCode));
 
