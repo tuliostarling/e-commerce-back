@@ -7,6 +7,6 @@ EXPOSE 3000
 WORKDIR $HOME
 COPY ./ $HOME
 
-RUN npm install && npm rebuild
+RUN npm install && npm rebuild && npm audit fix
 
 CMD [ "npm", "start" ]

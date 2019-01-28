@@ -15,17 +15,20 @@ const home = require('./home');
 const authentication = require('./auth');
 const noauth = require('./noauth')
 const dashboard = require('./dashboard');
+const passport_login = require('./passport');
 
 // Cria routes que não requerem autenticação
-router.use('/', noauth);
+router.use('/noauth', noauth);
 router.use('/product', product);
 router.use('/category', category);
 router.use('/comment', comment);
 router.use('/shipping', shipping);
-router.use('/auth', authentication); // Login
-
+// Login
+router.use('/auth/', authentication); 
+// Passport-login
+router.use('/passport/auth', passport_login);
 // Rotas Autenticadas
-router.use(auth);//MiddleWare Validando Token antes do usuario seguir.
+//router.use(auth);//MiddleWare Validando Token antes do usuario seguir.
 
 router.use('/user', user);// criação de conta.
 router.use('/cart', cart);

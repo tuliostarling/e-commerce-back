@@ -6,17 +6,22 @@ const morgan = require('morgan');
 const mongoose = require('mongoose');
 const config = require('./secrets/config');
 const apiRoutes = require('./routes');
+const auth = require('./controllers/auth_passport');
+const passport = require('passport');
+const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 
-
+app.use(cors());
+app.use(session({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(morgan('[:date[web]] [:response-time ms] [:status] :method :url'));
 app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cors());
 
+auth(passport);
 app.use('/api', apiRoutes);
-
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongodb, { useNewUrlParser: true }, (err, cb) => {
