@@ -10,10 +10,11 @@ exports.getAllPromotions = (req, res, callback) => {
     const offset = req.params.page * 16;
 
     let query = `SELECT DISTINCT ON (images.id_subproduct) subproducts.id as id_subproduct ,products.name, subproducts.id_product, subproducts.price, images.location_aws 
-    FROM products , subproducts , images 
+    FROM products , subproducts , images
     WHERE products.id = subproducts.id_product 
 	AND subproducts.promotion = true
-    AND images.id_subproduct = subproducts.id 
+    AND images.id_subproduct = subproducts.id
+	AND subproducts.id NOT IN(SELECT id_subproduct FROM home_products) 
     LIMIT 16 OFFSET ($1)`;
 
     (async () => {

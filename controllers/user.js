@@ -310,6 +310,45 @@ exports.getOne = (req, res, callback) => {
     }).catch((err) => { return callback(err, 500); });
 };
 
+exports.getAllUsers = (req, res, callback) => {
+    const query = `SELECT id, name, email, admin FROM users`;
+
+    POOL.query(query).then(result => {
+        if (result) {
+            const { rows } = result;
+            if (rows.length > 0) return callback(null, 200, rows);
+        }
+    }).catch(err => { return callback(err, 500); })
+};
+
+exports.updateUserToADM = (req, res, callback) => {
+    const idUser = req.body.id;
+
+    const query = `UPDATE users SET admin = true WHERE id = ($1)`;
+
+    POOL.query(query, [idUser]).then(result => {
+        if (result) {
+            const { rows } = result;
+
+            if (result.rowCount > 0) return callback(null, 200, rows);
+        }
+    }).catch(err => { return callback(err, 500); })
+};
+
+exports.updateUserToNormal = (req, res, callback) => {
+    const idUser = req.body.id;
+
+    const query = `UPDATE users SET admin = false WHERE id = ($1)`;
+
+    POOL.query(query, [idUser]).then(result => {
+        if (result) {
+            const { rows } = result;
+
+            if (result.rowCount > 0) return callback(null, 200, rows);
+        }
+    }).catch(err => { return callback(err, 500); })
+};
+
 exports.getPurchases = (req, res, callback) => {
     const idUser = req.params.id;
 
@@ -375,7 +414,6 @@ exports.contactUs = (req, res, callback) => {
     });
 
 };
-
 
 function hashPass(pass) {
     return crypto.createHash('sha512').update(pass).digest('hex');

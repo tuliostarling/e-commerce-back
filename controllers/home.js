@@ -20,7 +20,12 @@ exports.getAllSubProducts = (req, res, callback) => {
 };
 
 exports.getHomeProducts = (req, res, callback) => {
-    let query = `SELECT * FROM home_products`;
+    let query = `SELECT DISTINCT ON (hp.id) hp.id, hp.position, p.name, sp.id as id_subproduct, sp.price, sp.size, sp.material, im.location_aws
+	                FROM products p, subproducts sp, images im, home_products hp
+		                WHERE hp.id_subproduct = sp.id AND
+			                p.id = sp.id_product AND
+				                sp.id = im.id_subproduct
+					                ORDER BY hp.id`;
 
     POOL.query(query).then(result => {
         if (result) {
@@ -43,15 +48,41 @@ exports.getHomeImages = (req, res, callback) => {
 };
 
 exports.addHomeProducts = (req, res, callback) => {
-    const { id, id_subproduct } = req.body;
-    let query = `INSERT INTO home_products(id, id_subproduct) VALUES (($1),($2)`
+    const { position, id_subproduct } = req.body;
 
-    POOL.query(query, [id, id_subproduct]).then(result => {
+    console.log(req.body);
+
+    let query = `INSERT INTO home_products(position, id_subproduct) VALUES (($1),($2))`
+
+    POOL.query(query, [position, id_subproduct]).then(result => {
         if (result) {
             if (result.rowCount > 0) return callback(null, 200, { sucess: true });
         }
     }).catch((err) => { return callback(err, 500) });
+};
 
+exports.updatePositionHomeProduct = (req, res, callback) => {
+    const { id, position } = req.body;
+
+    let query = `UPDATE home_products SET position = ($2) where id = ($1)`
+
+    POOL.query(query, [id, position]).then(result => {
+        if (result) {
+            if (result.rowCount > 0) return callback(null, 200, { sucess: true });
+        }
+    }).catch((err) => { return callback(err, 500) });
+};
+
+exports.removeHomeProducts = (req, res, callback) => {
+    const { id } = req.params;
+
+    let query = `DELETE FROM home_products WHERE id = ($1)`
+
+    POOL.query(query, [id]).then(result => {
+        if (result) {
+            if (result.rowCount > 0) return callback(null, 200, { sucess: true });
+        }
+    }).catch((err) => { return callback(err, 500) });
 };
 
 exports.addImages = (req, res, callback) => {
