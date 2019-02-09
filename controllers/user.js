@@ -24,8 +24,8 @@ exports.add = (req, res, callback) => {
             .save((err, obj) => {
                 if (err) return callback(err, 500);// REFATORAR
                 let email = req.body.email;
-                //let url = 'http://www.tutuguerra.com.br/confirm/' + hash + '/';
-                let url = 'localhost:3000/api/confirm/' + hash + '/';
+                let url = 'http://www.tutuguerra.com.br/confirm/' + hash + '/';
+                //let url = 'localhost:3000/api/noauth/confirm/' + hash + '/';
                 mail.send({
                     to: email,
                     subject: 'Parabéns pela sua conta na Tutu Guerra',
@@ -43,26 +43,25 @@ exports.confirmUser = (req, res, callback) => {
     let { hex } = req.params;
     if (!hex) return callback('URL INSERIDA INCORRETA', 400);
 
-    bufferData.findOneAndUpdate({ hashed: hex }, { $unset: { createdAt: 1 } }
-        , { multi: false }, (err, user) => {
-            if (err)
-                return callback(err, 500);
-            else if (!user)
-                return callback('Código de confirmação expirado, crie seu Usuario novamente', 404); //REFATORAR para avisar que o codigo expirou ou ja foi confirmado
+    bufferData.findOne({ hashed: hex }, { multi: false }, (err, user) => {
+        if (err)
+            return callback(err, 500);
+        else if (!user)
+        return callback('Código de confirmação expirado, crie seu Usuario novamente', 404); //REFATORAR para avisar que o codigo expirou ou ja foi confirmado
+        
+        let newUser = { name: user.name, password: user.password, email: user.email, hashtoken: user.hashed, admin: user.admin };
+        let queryUser = `INSERT INTO users(name,password,email,hashtoken,admin) VALUES ($1,$2,$3,$4,$5) RETURNING id`;
 
-            let newUser = { name: user.name, password: user.password, email: user.email, hashtoken: user.hashed, admin: user.admin };
-            let queryUser = `INSERT INTO users(name,password,email,hashtoken,admin) VALUES ($1,$2,$3,$4,$5) RETURNING id`;
+        (async () => {
+            const client = await pool.connect();
 
-            (async () => {
-                const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
 
-                try {
-                    await client.query('BEGIN');
+                const { rows } = await client.query(queryUser,
+                    [newUser.name, newUser.password, newUser.email, newUser.hashtoken, newUser.admin]);
 
-                    const { rows } = await client.query(queryUser,
-                        [newUser.name, newUser.password, newUser.email, newUser.hashtoken, newUser.admin]);
-
-                    let query = `WITH insCart AS (
+                let query = `WITH insCart AS (
                                     INSERT INTO cart(id_user) 
                                     VALUES ($1)
                                     ON CONFLICT DO NOTHING
@@ -71,20 +70,20 @@ exports.confirmUser = (req, res, callback) => {
                                     INSERT INTO wishlist(id_user) 
                                     SELECT id_user FROM insCart
                                     `;
-                    await client.query(query, [rows[0].id]);
+                await client.query(query, [rows[0].id]);
 
-                    await client.query('COMMIT');
-                    user.remove();
-                    return callback(null, 200, { sucess: true });
-                } catch (err) {
-                    await client.query('ROLLBACK');
-                    console.log(err);
-                    throw err;
-                } finally {
-                    client.release();
-                }
-            })().catch(err => { return callback(err, 500); });
-        });
+                await client.query('COMMIT');
+                user.remove();
+                return callback(null, 200, { sucess: true });
+            } catch (err) {
+                await client.query('ROLLBACK');
+                console.log(err);
+                throw err;
+            } finally {
+                client.release();
+            }
+        })().catch(err => { return callback(err, 500); });
+    });
 };
 
 exports.newPass = (req, res, callback) => {

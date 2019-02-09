@@ -23,12 +23,10 @@ router.use('/product', product);
 router.use('/category', category);
 router.use('/comment', comment);
 router.use('/shipping', shipping);
-// Login
-router.use('/auth/', authentication); 
-// Passport-login
-router.use('/passport/auth', passport_login);
+router.use('/passport/auth', passport_login);// Passport-Login
+router.use('/auth/', authentication); // Normal-Login
 // Rotas Autenticadas
-//router.use(auth);//MiddleWare Validando Token antes do usuario seguir.
+router.use(auth);//MiddleWare Validando Token antes do usuario seguir.
 
 router.use('/user', user);// criação de conta.
 router.use('/cart', cart);

@@ -11,6 +11,7 @@ exports.payCart = (req, res, callback) => {
     const id = req.body.idUser
 
     paypal.configure(config.paySandBox);
+    //paypal.configure(config.payPal);
     let cartItems = [];
 
     cartInfo.cartItem.forEach(element => {

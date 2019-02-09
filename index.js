@@ -9,19 +9,22 @@ const apiRoutes = require('./routes');
 const auth = require('./controllers/auth_passport');
 const passport = require('passport');
 const session = require('express-session');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(session({ secret: 'keyboard cat', resave: true, saveUninitialized: true }));
+
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(cors());
+app.use(session({ secret: 'keyboard_cat', resave: true, saveUninitialized: true }));
 app.use(morgan('[:date[web]] [:response-time ms] [:status] :method :url'));
 app.use(bodyParser.json({ limit: '1024mb' })); // Max size of recieved file
 app.use(bodyParser.urlencoded({ extended: false }));
 
 auth(passport);
-app.use('/api', apiRoutes);
+app.use(apiRoutes);
 
 mongoose.Promise = global.Promise;
 mongoose.connect(config.mongodb, { useNewUrlParser: true }, (err, cb) => {
@@ -29,10 +32,18 @@ mongoose.connect(config.mongodb, { useNewUrlParser: true }, (err, cb) => {
     return console.log("Mongo OK!");
 })
 
+const credentials = {
+    key: fs.readFileSync('/etc/letsencrypt/live/tutuguerra.com.br/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/tutuguerra.com.br/fullchain.pem')
+};
+
 /**
  * Start do Servidor
  */
-app.listen(port, (err) => {
+
+//http.createServer(app).listen(port, () => {
+https.createServer(credentials, app).listen(port, () => {
+    //app.listen(port => {
     console.log(`Api Server is up on port ${port}`);
     printAllRoutes();
 

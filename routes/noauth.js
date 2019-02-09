@@ -11,8 +11,4 @@ router.get('/confirm/:hex',
 router.post('/contactUs',
     execute(control.contactUs));
 
-router.post('/add',
-    execute(control.add));
-
-
 module.exports = router;
