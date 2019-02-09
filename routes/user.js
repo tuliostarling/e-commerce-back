@@ -24,15 +24,24 @@ router.put('/put',
     execute(control.update));
 
 router.put('/putAddress',
-    execute(control.updateAddress))
+    execute(control.updateAddress));
 
 router.get('/listone/:id',
     execute(control.getOne));
+
+router.get('/getAllUsers',
+    execute(control.getAllUsers));
+
+router.put('/putUserToADM',
+    execute(control.updateUserToADM));
+
+router.put('/putUserToNormal',
+    execute(control.updateUserToNormal));
 
 router.get('/purchases/:id',
     execute(control.getPurchases));
 
 router.get('/getPurchase/:id',
-    execute(control.getOnePurchase))
+    execute(control.getOnePurchase));
 
 module.exports = router;

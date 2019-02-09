@@ -11,6 +11,15 @@ let upload = multer({ storage: storage });
 router.get('/getHomeProducts/',
     execute(control.getHomeProducts));
 
+router.post('/addHomeProducts',
+    execute(control.addHomeProducts));
+
+router.post('/updatePosition',
+    execute(control.updatePositionHomeProduct));
+
+router.delete('/removeHomeProducts/:id',
+    execute(control.removeHomeProducts));
+
 router.get('/getHomeImages/',
     execute(control.getHomeImages));
 
