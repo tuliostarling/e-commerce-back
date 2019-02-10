@@ -38,7 +38,7 @@ exports.getAllPromotions = (req, res, callback) => {
 
 exports.getListMainProduct = (req, res, callback) => {
     const offset = req.params.page * 10;
-    
+
     const query = `SELECT * from products LIMIT 10 OFFSET ($1)`;
 
     (async () => {
@@ -93,7 +93,7 @@ exports.getAllSubProduct = (req, res, callback) => {
             const total = await client.query(totalQuery, [id]);
             const { rows } = await client.query(query, [id, offset]);
             const imgRows = await client.query(imgQuery, [id]);
-            
+
             // rows.reduce((acc, row) => {
             //     const found = acc.find(r => r.id === row.id);
             //     if (found) {
@@ -122,7 +122,7 @@ exports.getListByCategory = (req, res, callback) => {
     const offset = req.params.page * 16;
 
     const query =
-        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id,products.name, subproducts.id_product, subproducts.price,
+        `SELECT DISTINCT ON (images.id_subproduct) subproducts.id,products.name, subproducts.id_product, subproducts.price, subproducts.old_price,
         images.location_aws, images.id as id_image
 	    FROM products , subproducts , images
         WHERE products.id_category = ($1)

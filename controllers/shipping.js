@@ -7,13 +7,12 @@ const shipInfo = require('../secrets/config');
 exports.getShipPrice = (req, res, callback) => {
     const { cep, value } = req.body;
     const correios = new correioShip();
-
     if (cep) shipInfo.correioConfig.sCepDestino = cep;
     if (value) shipInfo.correioConfig.nVlValorDeclarado = value;
 
     correios.calcPreco(shipInfo.correioConfig, (err, totalValue) => {
         if (err) return callback('Erro ao calcular Frete', 500);
-
+        
         if (Object.keys(totalValue[0].Erro).length === 0 && totalValue[0].Erro.constructor === Object) { //Verify if object returns a error
 
             cepAPI(cep).then(adress => {

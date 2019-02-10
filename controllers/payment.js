@@ -9,9 +9,9 @@ const pool = new pg.Pool(config.conn);
 exports.payCart = (req, res, callback) => {
     let cartInfo = req.body;
     const id = req.body.idUser
-
-    paypal.configure(config.paySandBox);
-    //paypal.configure(config.payPal);
+    const debug = true;
+    //paypal.configure(config.paySandBox);
+    paypal.configure(config.payPal);
     let cartItems = [];
 
     cartInfo.cartItem.forEach(element => {
@@ -26,18 +26,33 @@ exports.payCart = (req, res, callback) => {
 
         cartItems.push(element);
     });
+    if (debug) {
+        config.paymentObj.transactions[0].item_list.items = cartItems;
+        config.paymentObj.transactions[0].item_list.shipping_address.recipient_name = "Teste"
+        config.paymentObj.transactions[0].item_list.shipping_address.country_code = "BR"
+        config.paymentObj.transactions[0].item_list.shipping_address.line1 = "Teste"
+        config.paymentObj.transactions[0].item_list.shipping_address.line2 = "Teste"
+        config.paymentObj.transactions[0].item_list.shipping_address.city = "Belo Horizonte"
+        config.paymentObj.transactions[0].item_list.shipping_address.postal_code = "30140082"
+        config.paymentObj.transactions[0].item_list.shipping_address.state = "MG"
+        config.paymentObj.transactions[0].amount.details.subtotal = cartInfo.subTotal.toString();
+        config.paymentObj.transactions[0].amount.details.shipping = cartInfo.shipping.toString();
+        config.paymentObj.transactions[0].amount.total = cartInfo.price.toString();
+    } else {
+        config.paymentObj.transactions[0].item_list.items = cartItems;
+        config.paymentObj.transactions[0].item_list.shipping_address.recipient_name = "Teste"
+        config.paymentObj.transactions[0].item_list.shipping_address.country_code = "BR"
+        config.paymentObj.transactions[0].item_list.shipping_address.line1 = cartInfo.adress.street
+        config.paymentObj.transactions[0].item_list.shipping_address.line2 = cartInfo.adress.neighborhood
+        config.paymentObj.transactions[0].item_list.shipping_address.city = cartInfo.adress.city
+        config.paymentObj.transactions[0].item_list.shipping_address.postal_code = cartInfo.adress.cep
+        config.paymentObj.transactions[0].item_list.shipping_address.state = cartInfo.adress.state
+        config.paymentObj.transactions[0].amount.details.subtotal = cartInfo.subTotal.toString();
+        config.paymentObj.transactions[0].amount.details.shipping = cartInfo.shipping.toString();
+        config.paymentObj.transactions[0].amount.total = cartInfo.price.toString();
 
-    config.paymentObj.transactions[0].item_list.items = cartItems;
-    config.paymentObj.transactions[0].item_list.shipping_address.recipient_name = "Teste"
-    config.paymentObj.transactions[0].item_list.shipping_address.country_code = "BR"
-    config.paymentObj.transactions[0].item_list.shipping_address.line1 = cartInfo.adress.street
-    config.paymentObj.transactions[0].item_list.shipping_address.line2 = cartInfo.adress.neighborhood
-    config.paymentObj.transactions[0].item_list.shipping_address.city = cartInfo.adress.city
-    config.paymentObj.transactions[0].item_list.shipping_address.postal_code = cartInfo.adress.cep
-    config.paymentObj.transactions[0].item_list.shipping_address.state = cartInfo.adress.state
-    config.paymentObj.transactions[0].amount.details.subtotal = cartInfo.subTotal.toString();
-    config.paymentObj.transactions[0].amount.details.shipping = cartInfo.shipping.toString();
-    config.paymentObj.transactions[0].amount.total = cartInfo.price.toString();
+    }
+    console.log(cartInfo);
 
     if (req.body.discount != null) {
         config.paymentObj.transactions[0].amount.details.subtotal = (cartInfo.subTotal + cartInfo.discount.value).toString();
@@ -115,6 +130,7 @@ exports.sucessPay = (req, res, callback) => {
                             result.transactions[0].related_resources[0].sale.transaction_fee.value, 'Aguardando', null]);
 
                         for (let i = 0; i < arr.length; i++) {
+                            Testeexpor
                             await client.query(insertQueryItem,
                                 [rows[0].purchase_id, arr[i].quantity,
                                 arr[i].name, arr[i].price, arr[i].currency])
@@ -141,3 +157,12 @@ exports.sucessPay = (req, res, callback) => {
             });
         });
 };
+
+exports.cancelPay = (req, res, callback) => {
+    paymentData.findOneAndUpdate({ id: req.body.user },
+        { multi: false }, (err, data) => {
+            if (err) return callback(err, 500);
+            data.remove();
+            return callback(null, 200)
+        });
+}

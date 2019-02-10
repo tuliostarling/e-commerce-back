@@ -10,5 +10,8 @@ router.post('/payCart',
 router.post('/sucessPay',
     execute(control.sucessPay));
 
+router.post('/cancelPay',
+    execute(control.cancelPay));
+
 
 module.exports = router;
